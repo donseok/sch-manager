@@ -1,0 +1,155 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { SHIFT_COLORS } from "@/lib/utils";
+
+interface ChangeLog {
+  id: string;
+  scheduleId: string;
+  nurseId: string;
+  workDate: string;
+  previousShiftCode: string | null;
+  newShiftCode: string;
+  changeReason: string | null;
+  changedById: string;
+  versionBefore: number;
+  versionAfter: number;
+  changedAt: string;
+  nurse: {
+    id: string;
+    name: string;
+  };
+  changedBy: {
+    id: string;
+    name: string;
+  };
+}
+
+interface ChangeHistoryProps {
+  scheduleId: string;
+}
+
+function ShiftBadge({ code }: { code: string | null }) {
+  if (!code) {
+    return <span className="text-xs text-gray-400">-</span>;
+  }
+  const colorClass = SHIFT_COLORS[code] || "bg-gray-100 text-gray-600";
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold ${colorClass}`}
+    >
+      {code}
+    </span>
+  );
+}
+
+export default function ChangeHistory({ scheduleId }: ChangeHistoryProps) {
+  const [logs, setLogs] = useState<ChangeLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchHistory() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/schedules/${scheduleId}/history`);
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch change history:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchHistory();
+  }, [scheduleId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="py-8 text-center text-sm text-gray-400">
+        변경 이력이 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200 text-left">
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              날짜
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              간호사
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              변경전
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              변경후
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              사유
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              변경자
+            </th>
+            <th className="whitespace-nowrap px-3 py-2 font-semibold text-gray-700">
+              변경일시
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {logs.map((log) => (
+            <tr
+              key={log.id}
+              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <td className="whitespace-nowrap px-3 py-2 text-gray-600">
+                {new Date(log.workDate).toLocaleDateString("ko-KR", {
+                  month: "2-digit",
+                  day: "2-digit",
+                })}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">
+                {log.nurse.name}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2">
+                <ShiftBadge code={log.previousShiftCode} />
+              </td>
+              <td className="whitespace-nowrap px-3 py-2">
+                <ShiftBadge code={log.newShiftCode} />
+              </td>
+              <td className="max-w-[200px] truncate px-3 py-2 text-gray-600">
+                {log.changeReason || "-"}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 text-gray-600">
+                {log.changedBy.name}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 text-gray-500">
+                {new Date(log.changedAt).toLocaleString("ko-KR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

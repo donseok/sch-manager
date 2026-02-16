@@ -55,7 +55,10 @@ export async function PUT(
       );
     }
 
-    // Upsert each entry
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userId = (session.user as any).id as string;
+
+    // Upsert each entry and record change logs
     const affectedNurseIds = new Set<string>();
 
     for (const entry of entries) {
@@ -67,6 +70,20 @@ export async function PUT(
 
       // Compute workDate from schedule's year/month/day
       const workDate = new Date(schedule.year, schedule.month - 1, day);
+
+      // Check existing entry for change log
+      const existing = await prisma.scheduleEntry.findUnique({
+        where: {
+          scheduleId_nurseId_workDate: {
+            scheduleId: params.id,
+            nurseId,
+            workDate,
+          },
+        },
+      });
+
+      const previousShiftCode = existing?.shiftTypeCode || null;
+      const isChanged = previousShiftCode !== shiftTypeCode;
 
       await prisma.scheduleEntry.upsert({
         where: {
@@ -87,6 +104,22 @@ export async function PUT(
           shiftTypeCode,
         },
       });
+
+      // Record change log if value changed
+      if (isChanged) {
+        await prisma.scheduleChangeLog.create({
+          data: {
+            scheduleId: params.id,
+            nurseId,
+            workDate,
+            previousShiftCode,
+            newShiftCode: shiftTypeCode,
+            changedById: userId,
+            versionBefore: schedule.version,
+            versionAfter: schedule.version,
+          },
+        });
+      }
 
       affectedNurseIds.add(nurseId);
     }

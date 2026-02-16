@@ -25,3 +25,23 @@ body {
     text-wrap: balance;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-layout,
+  .print-layout * {
+    visibility: visible;
+  }
+  .print-layout {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}

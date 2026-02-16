@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { ScheduleWithRelations, ScheduleGridData, SessionUser } from "@/types";
@@ -10,11 +10,14 @@ import {
   STATUS_COLORS,
   SHIFT_COLORS,
 } from "@/lib/utils";
+import { useReactToPrint } from "react-to-print";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
 import ScheduleGrid from "@/components/schedule/ScheduleGrid";
 import ApprovalHistory from "@/components/schedule/ApprovalHistory";
+import ChangeHistory from "@/components/schedule/ChangeHistory";
+import PrintLayout from "@/components/schedule/PrintLayout";
 import {
   Save,
   Printer,
@@ -24,6 +27,8 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
+  History,
+  ChevronLeft,
 } from "lucide-react";
 
 const SHIFT_CODES = [
@@ -60,6 +65,33 @@ export default function ScheduleEditPage() {
   // Approval history section
   const [showHistory, setShowHistory] = useState(false);
 
+  // Change history section
+  const [showChangeHistory, setShowChangeHistory] = useState(false);
+
+  // Previous month reference modal
+  const [showPreviousModal, setShowPreviousModal] = useState(false);
+  const [previousData, setPreviousData] = useState<{
+    year: number;
+    month: number;
+    version: number;
+    status: string;
+    wardName: string;
+    summaries: {
+      nurseId: string;
+      nurseName: string;
+      employeeNumber: string;
+      position: string;
+      countD: number;
+      countE: number;
+      countN: number;
+      countT: number;
+      countX: number;
+      countO: number;
+      countXO: number;
+    }[];
+  } | null>(null);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+
   // Unsaved changes warning
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
@@ -70,6 +102,9 @@ export default function ScheduleEditPage() {
   const setDirty = useScheduleStore((state) => state.setDirty);
 
   const user = session?.user as SessionUser | undefined;
+
+  // Print ref for react-to-print
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Determine editability based on status
   const isEditable = useMemo(() => {
@@ -306,7 +341,9 @@ export default function ScheduleEditPage() {
     }
   }, [scheduleId, approvalAction, approvalComment, fetchSchedule]);
 
-  // Print handler
+  // Print handler using react-to-print
+  const reactToPrint = useReactToPrint({ contentRef: printRef });
+
   const handlePrint = useCallback(async () => {
     try {
       // Record print log
@@ -318,7 +355,24 @@ export default function ScheduleEditPage() {
     } catch {
       // Print log failure should not block printing
     }
-    window.print();
+    reactToPrint();
+  }, [scheduleId, reactToPrint]);
+
+  // Fetch previous month reference
+  const handlePreviousMonth = useCallback(async () => {
+    setLoadingPrevious(true);
+    try {
+      const res = await fetch(`/api/schedules/${scheduleId}/previous`);
+      if (res.ok) {
+        const data = await res.json();
+        setPreviousData(data.previous);
+        setShowPreviousModal(true);
+      }
+    } catch {
+      alert("이전 월 데이터를 불러오는데 실패했습니다.");
+    } finally {
+      setLoadingPrevious(false);
+    }
   }, [scheduleId]);
 
   // Approval action labels
@@ -469,6 +523,17 @@ export default function ScheduleEditPage() {
             <Printer className="mr-1 h-4 w-4" />
             인쇄
           </Button>
+
+          {/* Previous month reference button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePreviousMonth}
+            loading={loadingPrevious}
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            이전 월 참조
+          </Button>
         </div>
       </div>
 
@@ -526,6 +591,31 @@ export default function ScheduleEditPage() {
           {showHistory && (
             <div className="p-6">
               <ApprovalHistory approvals={schedule.approvals} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Change History (only show for non-DRAFT schedules) */}
+      {schedule.status !== "DRAFT" && (
+        <div className="rounded-xl bg-white shadow-sm border border-gray-200 print:shadow-none print:border-0">
+          <button
+            onClick={() => setShowChangeHistory((prev) => !prev)}
+            className="flex w-full items-center justify-between border-b border-gray-200 px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+          >
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <History className="h-4 w-4 text-gray-500" />
+              변경 이력
+            </h3>
+            {showChangeHistory ? (
+              <ChevronUp className="h-4 w-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-400" />
+            )}
+          </button>
+          {showChangeHistory && (
+            <div className="p-6">
+              <ChangeHistory scheduleId={schedule.id} />
             </div>
           )}
         </div>
@@ -612,6 +702,104 @@ export default function ScheduleEditPage() {
           </p>
         </div>
       </Modal>
+
+      {/* Previous month reference modal */}
+      <Modal
+        isOpen={showPreviousModal}
+        onClose={() => setShowPreviousModal(false)}
+        title="이전 월 참조"
+        footer={
+          <Button
+            variant="secondary"
+            onClick={() => setShowPreviousModal(false)}
+          >
+            닫기
+          </Button>
+        }
+      >
+        {previousData ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="font-medium">
+                {previousData.wardName}
+              </span>
+              <span>
+                {previousData.year}년 {previousData.month}월
+              </span>
+              <Badge className={STATUS_COLORS[previousData.status] || ""}>
+                {STATUS_LABELS[previousData.status] || previousData.status}
+              </Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 text-left">
+                    <th className="whitespace-nowrap px-2 py-1.5 font-semibold text-gray-700">
+                      간호사
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-yellow-700">
+                      D
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-blue-700">
+                      E
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-purple-700">
+                      N
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-orange-700">
+                      T
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-gray-600">
+                      X
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-green-700">
+                      O
+                    </th>
+                    <th className="whitespace-nowrap px-2 py-1.5 text-center font-semibold text-gray-700">
+                      X+O
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previousData.summaries.map((s) => (
+                    <tr
+                      key={s.nurseId}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="whitespace-nowrap px-2 py-1.5 font-medium text-gray-900">
+                        {s.nurseName}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">{s.countD}</td>
+                      <td className="px-2 py-1.5 text-center">{s.countE}</td>
+                      <td className="px-2 py-1.5 text-center">{s.countN}</td>
+                      <td className="px-2 py-1.5 text-center">{s.countT}</td>
+                      <td className="px-2 py-1.5 text-center">{s.countX}</td>
+                      <td className="px-2 py-1.5 text-center">{s.countO}</td>
+                      <td className="px-2 py-1.5 text-center font-medium">
+                        {s.countXO}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <p className="py-4 text-center text-sm text-gray-400">
+            이전 월 근무표가 없습니다.
+          </p>
+        )}
+      </Modal>
+
+      {/* Print Layout (hidden from screen, visible in print) */}
+      <PrintLayout
+        ref={printRef}
+        year={schedule.year}
+        month={schedule.month}
+        wardName={schedule.ward.wardName}
+        status={schedule.status}
+        gridData={gridData}
+      />
     </div>
   );
 }
