@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Ward, Schedule } from "@prisma/client";
 import Button from "@/components/ui/Button";
@@ -35,7 +35,7 @@ function getStatusBadgeVariant(
   }
 }
 
-export default function SchedulesPage() {
+function SchedulesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const now = new Date();
@@ -449,5 +449,17 @@ export default function SchedulesPage() {
         </p>
       </Modal>
     </div>
+  );
+}
+
+export default function SchedulesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      </div>
+    }>
+      <SchedulesContent />
+    </Suspense>
   );
 }
