@@ -100,7 +100,7 @@ export async function GET(
             const dow = new Date(schedule.year, schedule.month - 1, d).getDay();
             header2.push(dayOfWeekKR[dow]);
         }
-        for (const _k of SUMMARY_KEYS) header2.push("");
+        for (const _ of SUMMARY_KEYS) header2.push("");
 
         // Data rows
         const dataRows = nurses.map((nurse) => {
@@ -186,7 +186,7 @@ export async function GET(
             { wch: 10 }, // 직위
         ];
         for (let d = 0; d < daysInMonth; d++) colWidths.push({ wch: 4 });
-        for (const _k of SUMMARY_KEYS) colWidths.push({ wch: 5 });
+        for (const _ of SUMMARY_KEYS) colWidths.push({ wch: 5 });
         ws["!cols"] = colWidths;
 
         const sheetName = `${schedule.ward.wardName} ${schedule.year}년 ${schedule.month}월`;
