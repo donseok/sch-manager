@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 병동 정보
+model Ward {
+  id          String   @id @default(uuid())
+  wardCode    String   @unique @map("ward_code")
+  wardName    String   @map("ward_name")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  nurses    Nurse[]
+  users     User[]
+  schedules Schedule[]
+
+  @@map("wards")
+}
+
+// 간호사 사원 정보
+model Nurse {
+  id               String   @id @default(uuid())
+  employeeNumber   String   @unique @map("employee_number")
+  name             String
+  position         String
+  positionRank     Int      @default(0) @map("position_rank")
+  wardId           String   @map("ward_id")
+  employmentStatus String   @default("ACTIVE") @map("employment_status")
+  hireDate         DateTime? @map("hire_date")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  ward             Ward     @relation(fields: [wardId], references: [id])
+  scheduleEntries  ScheduleEntry[]
+  scheduleSummaries ScheduleSummary[]
+  changeLogs       ScheduleChangeLog[]
+  user             User?
+
+  @@map("nurses")
+}
+
+// 시스템 사용자
+model User {
+  id           String    @id @default(uuid())
+  loginId      String    @unique @map("login_id")
+  passwordHash String    @map("password_hash")
+  name         String
+  role         String
+  nurseId      String?   @unique @map("nurse_id")
+  wardId       String?   @map("ward_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  nurse              Nurse?    @relation(fields: [nurseId], references: [id])
+  ward               Ward?     @relation(fields: [wardId], references: [id])
+  createdSchedules   Schedule[] @relation("ScheduleCreator")
+  confirmedSchedules Schedule[] @relation("ScheduleConfirmer")
+  approvals          ScheduleApproval[]
+  changeLogs         ScheduleChangeLog[]
+  printLogs          SchedulePrintLog[]
+
+  @@map("users")
+}
+
+// 근무 유형 마스터
+model ShiftType {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  description  String?
+  colorCode    String?  @map("color_code")
+  isWorkingDay Boolean  @default(true) @map("is_working_day")
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("shift_types")
+}
+
+// 월간 근무확정표
+model Schedule {
+  id          String    @id @default(uuid())
+  wardId      String    @map("ward_id")
+  year        Int
+  month       Int
+  version     Int       @default(1)
+  status      String    @default("DRAFT")
+  createdById String    @map("created_by")
+  confirmedAt DateTime? @map("confirmed_at")
+  confirmedById String? @map("confirmed_by")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  ward        Ward      @relation(fields: [wardId], references: [id])
+  createdBy   User      @relation("ScheduleCreator", fields: [createdById], references: [id])
+  confirmedBy User?     @relation("ScheduleConfirmer", fields: [confirmedById], references: [id])
+  entries     ScheduleEntry[]
+  summaries   ScheduleSummary[]
+  approvals   ScheduleApproval[]
+  changeLogs  ScheduleChangeLog[]
+  printLogs   SchedulePrintLog[]
+
+  @@unique([wardId, year, month, version])
+  @@map("schedules")
+}
+
+// 근무표 상세 엔트리 (간호사별/일별)
+model ScheduleEntry {
+  id            String   @id @default(uuid())
+  scheduleId    String   @map("schedule_id")
+  nurseId       String   @map("nurse_id")
+  workDate      DateTime @map("work_date")
+  shiftTypeCode String   @map("shift_type_code")
+  isModified    Boolean  @default(false) @map("is_modified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  schedule      Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse         Nurse    @relation(fields: [nurseId], references: [id])
+
+  @@unique([scheduleId, nurseId, workDate])
+  @@map("schedule_entries")
+}
+
+// 간호사별 월간 집계
+model ScheduleSummary {
+  id               String   @id @default(uuid())
+  scheduleId       String   @map("schedule_id")
+  nurseId          String   @map("nurse_id")
+  countD           Int      @default(0) @map("count_d")
+  countE           Int      @default(0) @map("count_e")
+  countN           Int      @default(0) @map("count_n")
+  countT           Int      @default(0) @map("count_t")
+  countX           Int      @default(0) @map("count_x")
+  countO           Int      @default(0) @map("count_o")
+  countXO          Int      @default(0) @map("count_xo")
+  totalWorkingDays Int      @default(0) @map("total_working_days")
+  totalOffDays     Int      @default(0) @map("total_off_days")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  schedule         Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse            Nurse    @relation(fields: [nurseId], references: [id])
+
+  @@unique([scheduleId, nurseId])
+  @@map("schedule_summaries")
+}
+
+// 승인 워크플로우 이력
+model ScheduleApproval {
+  id           String   @id @default(uuid())
+  scheduleId   String   @map("schedule_id")
+  approvalStep Int      @map("approval_step")
+  approvalRole String   @map("approval_role")
+  approverId   String   @map("approver_id")
+  action       String
+  comment      String?
+  actedAt      DateTime @default(now()) @map("acted_at")
+
+  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  approver     User     @relation(fields: [approverId], references: [id])
+
+  @@map("schedule_approvals")
+}
+
+// 수정 이력
+model ScheduleChangeLog {
+  id                String   @id @default(uuid())
+  scheduleId        String   @map("schedule_id")
+  nurseId           String   @map("nurse_id")
+  workDate          DateTime @map("work_date")
+  previousShiftCode String?  @map("previous_shift_code")
+  newShiftCode      String   @map("new_shift_code")
+  changeReason      String?  @map("change_reason")
+  changedById       String   @map("changed_by")
+  versionBefore     Int      @map("version_before")
+  versionAfter      Int      @map("version_after")
+  changedAt         DateTime @default(now()) @map("changed_at")
+
+  schedule          Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse             Nurse    @relation(fields: [nurseId], references: [id])
+  changedBy         User     @relation(fields: [changedById], references: [id])
+
+  @@map("schedule_change_logs")
+}
+
+// 출력 이력
+model SchedulePrintLog {
+  id          String   @id @default(uuid())
+  scheduleId  String   @map("schedule_id")
+  printedById String   @map("printed_by")
+  printFormat String   @default("PDF") @map("print_format")
+  printedAt   DateTime @default(now()) @map("printed_at")
+
+  schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  printedBy   User     @relation(fields: [printedById], references: [id])
+
+  @@map("schedule_print_logs")
+}

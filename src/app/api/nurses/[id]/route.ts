@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const nurse = await prisma.nurse.findUnique({
+    where: { id: params.id },
+    include: { ward: true },
+  });
+
+  if (!nurse) {
+    return NextResponse.json({ error: "Nurse not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(nurse);
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+
+    const nurse = await prisma.nurse.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!nurse) {
+      return NextResponse.json({ error: "Nurse not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.nurse.update({
+      where: { id: params.id },
+      data: {
+        ...(body.employeeNumber !== undefined && { employeeNumber: body.employeeNumber }),
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.position !== undefined && { position: body.position }),
+        ...(body.positionRank !== undefined && { positionRank: body.positionRank }),
+        ...(body.wardId !== undefined && { wardId: body.wardId }),
+        ...(body.hireDate !== undefined && { hireDate: body.hireDate ? new Date(body.hireDate) : null }),
+        ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
+        ...(body.employmentStatus !== undefined && { employmentStatus: body.employmentStatus }),
+      },
+      include: { ward: true },
+    });
+
+    return NextResponse.json(updated);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Employee number already exists" },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json(
+      { error: "Failed to update nurse" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const nurse = await prisma.nurse.findUnique({
+    where: { id: params.id },
+  });
+
+  if (!nurse) {
+    return NextResponse.json({ error: "Nurse not found" }, { status: 404 });
+  }
+
+  const updated = await prisma.nurse.update({
+    where: { id: params.id },
+    data: { employmentStatus: "RESIGNED" },
+  });
+
+  return NextResponse.json(updated);
+}
