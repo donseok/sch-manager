@@ -445,6 +445,7 @@ export default function ScheduleEditPage() {
   }, [selectedNurseId, wardNurses, schedule, addNurseToGrid]);
 
   // Remove nurse handler (disabled - coming soon)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRemoveNurse = useCallback((_nurseId: string, _nurseName: string) => {
     alert("준비중");
   }, []);
