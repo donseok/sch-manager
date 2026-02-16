@@ -82,6 +82,7 @@ export default function SchedulesPage() {
           const ward42 = data.find((w: Ward) => w.wardName === "42병동");
           if (ward42) {
             setCreateWardId(ward42.id);
+            setFilterWardId(ward42.id);
           }
         }
       } catch {
@@ -228,18 +229,9 @@ export default function SchedulesPage() {
         </div>
         <div className="flex items-center gap-2">
           <label className="text-base font-medium text-slate-700 dark:text-slate-300">병동</label>
-          <select
-            value={filterWardId}
-            onChange={(e) => setFilterWardId(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
-          >
-            <option value="">전체</option>
-            {wards.map((ward) => (
-              <option key={ward.id} value={ward.id}>
-                {ward.wardName}
-              </option>
-            ))}
-          </select>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-base text-slate-700 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100">
+            42병동
+          </div>
         </div>
         <Button onClick={fetchSchedules} loading={loading} size="sm">
           <Search className="mr-1.5 h-4 w-4" />
