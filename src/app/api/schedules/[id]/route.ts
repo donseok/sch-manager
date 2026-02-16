@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const schedule = await prisma.schedule.findUnique({
     where: { id: params.id },
     include: {
@@ -24,14 +17,6 @@ export async function GET(
       },
       summaries: {
         include: { nurse: true },
-      },
-      approvals: {
-        include: {
-          approver: {
-            select: { id: true, name: true },
-          },
-        },
-        orderBy: { actedAt: "asc" },
       },
       ward: true,
       createdBy: {
@@ -48,4 +33,31 @@ export async function GET(
   }
 
   return NextResponse.json(schedule);
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const schedule = await prisma.schedule.findUnique({
+    where: { id: params.id },
+    select: { id: true, status: true },
+  });
+
+  if (!schedule) {
+    return NextResponse.json({ error: "근무표를 찾을 수 없습니다." }, { status: 404 });
+  }
+
+  if (schedule.status === "CONFIRMED") {
+    return NextResponse.json(
+      { error: "확정된 근무표는 삭제할 수 없습니다." },
+      { status: 400 }
+    );
+  }
+
+  await prisma.schedule.delete({
+    where: { id: params.id },
+  });
+
+  return NextResponse.json({ message: "근무표가 삭제되었습니다." });
 }

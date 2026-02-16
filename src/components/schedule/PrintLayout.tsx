@@ -78,6 +78,17 @@ const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
           .print-layout .summary-col {
             font-weight: 600;
           }
+          .print-layout .daily-summary-header {
+            background-color: #e8f5e9;
+            font-weight: 700;
+          }
+          .print-layout .daily-summary-row td {
+            background-color: #f1f8f1;
+          }
+          .print-layout .daily-summary-total {
+            background-color: #c8e6c9;
+            font-weight: 700;
+          }
         `}</style>
 
         {/* Title */}
@@ -185,6 +196,95 @@ const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            {(() => {
+              const shiftTypes = ["D", "E", "N", "T", "X"] as const;
+              const counts: Record<string, Record<number, number>> = {};
+              const totals: Record<string, number> = {};
+
+              for (const type of shiftTypes) {
+                counts[type] = {};
+                totals[type] = 0;
+                for (const day of days) {
+                  counts[type][day] = 0;
+                }
+              }
+
+              for (const row of gridData) {
+                for (const day of days) {
+                  const shift = row.entries[day];
+                  if (shift && counts[shift] !== undefined) {
+                    counts[shift][day]++;
+                    totals[shift]++;
+                  }
+                }
+              }
+
+              const txCounts: Record<number, number> = {};
+              let txTotal = 0;
+              for (const day of days) {
+                txCounts[day] = counts.T[day] + counts.X[day];
+                txTotal += txCounts[day];
+              }
+
+              const dailyTotal: Record<number, number> = {};
+              let grandTotal = 0;
+              for (const day of days) {
+                dailyTotal[day] = 0;
+                for (const row of gridData) {
+                  if (row.entries[day]) dailyTotal[day]++;
+                }
+                grandTotal += dailyTotal[day];
+              }
+
+              return (
+                <>
+                  {/* 근무집계 header */}
+                  <tr>
+                    <td colSpan={4} className="daily-summary-header">근무집계</td>
+                    {days.map((day) => {
+                      const dowIndex = getDayOfWeekIndex(year, month, day);
+                      return (
+                        <td
+                          key={`dsm-h-${day}`}
+                          className={`daily-summary-header ${dowIndex === 0 ? "sunday-col" : dowIndex === 6 ? "weekend-col" : ""}`}
+                        >
+                          {day}
+                        </td>
+                      );
+                    })}
+                    <td colSpan={7} className="daily-summary-header">합계</td>
+                  </tr>
+                  {/* D, E, N, T, X rows */}
+                  {shiftTypes.map((type) => (
+                    <tr key={`dsm-${type}`} className="daily-summary-row">
+                      <td colSpan={4} style={{ fontWeight: 600 }}>{type}</td>
+                      {days.map((day) => (
+                        <td key={`dsm-${type}-${day}`}>{counts[type][day] || 0}</td>
+                      ))}
+                      <td colSpan={7} className="summary-col">{totals[type]}</td>
+                    </tr>
+                  ))}
+                  {/* T + X row */}
+                  <tr className="daily-summary-row">
+                    <td colSpan={4} style={{ fontWeight: 600 }}>T + X</td>
+                    {days.map((day) => (
+                      <td key={`dsm-tx-${day}`}>{txCounts[day] || 0}</td>
+                    ))}
+                    <td colSpan={7} className="summary-col">{txTotal}</td>
+                  </tr>
+                  {/* 일별 총인원 row */}
+                  <tr>
+                    <td colSpan={4} className="daily-summary-total">일별 총인원(명)</td>
+                    {days.map((day) => (
+                      <td key={`dsm-total-${day}`} className="daily-summary-total">{dailyTotal[day]}</td>
+                    ))}
+                    <td colSpan={7} className="daily-summary-total">{grandTotal}</td>
+                  </tr>
+                </>
+              );
+            })()}
+          </tfoot>
         </table>
 
         {/* Approval Line */}

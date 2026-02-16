@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -36,30 +35,26 @@ async function main() {
   });
   console.log("병동 시드 완료");
 
-  // 3. 간호사 20명 생성
+  // 3. 간호사 생성 (42병동 사원정보)
   const nurseData = [
-    { employeeNumber: "N2024001", name: "김미영", position: "HN", positionRank: 1, sortOrder: 1 },
-    { employeeNumber: "N2024002", name: "이수진", position: "CN", positionRank: 2, sortOrder: 2 },
-    { employeeNumber: "N2024003", name: "박지현", position: "CN", positionRank: 2, sortOrder: 3 },
-    { employeeNumber: "N2024004", name: "최은주", position: "AN", positionRank: 3, sortOrder: 4 },
-    { employeeNumber: "N2024005", name: "정하나", position: "AN", positionRank: 3, sortOrder: 5 },
-    { employeeNumber: "N2024006", name: "강서연", position: "RN", positionRank: 4, sortOrder: 6 },
-    { employeeNumber: "N2024007", name: "윤다은", position: "RN", positionRank: 4, sortOrder: 7 },
-    { employeeNumber: "N2024008", name: "임소라", position: "RN", positionRank: 4, sortOrder: 8 },
-    { employeeNumber: "N2024009", name: "한지영", position: "RN", positionRank: 4, sortOrder: 9 },
-    { employeeNumber: "N2024010", name: "오민지", position: "RN", positionRank: 4, sortOrder: 10 },
-    { employeeNumber: "N2024011", name: "서유나", position: "RN", positionRank: 4, sortOrder: 11 },
-    { employeeNumber: "N2024012", name: "조현아", position: "RN", positionRank: 4, sortOrder: 12 },
-    { employeeNumber: "N2024013", name: "신예진", position: "RN", positionRank: 4, sortOrder: 13 },
-    { employeeNumber: "N2024014", name: "권나래", position: "RN", positionRank: 4, sortOrder: 14 },
-    { employeeNumber: "N2024015", name: "황수빈", position: "RN", positionRank: 4, sortOrder: 15 },
-    { employeeNumber: "N2024016", name: "배지은", position: "RN", positionRank: 4, sortOrder: 16 },
-    { employeeNumber: "N2024017", name: "류하린", position: "RN", positionRank: 4, sortOrder: 17 },
-    { employeeNumber: "N2024018", name: "송다영", position: "RN", positionRank: 4, sortOrder: 18 },
-    { employeeNumber: "N2024019", name: "전소희", position: "RN", positionRank: 4, sortOrder: 19 },
-    { employeeNumber: "N2024020", name: "홍세라", position: "RN", positionRank: 4, sortOrder: 20 },
+    { employeeNumber: "10400133", name: "진인숙", position: "HN", positionRank: 1, sortOrder: 1 },
+    { employeeNumber: "10400188", name: "김경선", position: "CN", positionRank: 2, sortOrder: 2 },
+    { employeeNumber: "10400527", name: "서유리", position: "RN", positionRank: 4, sortOrder: 3 },
+    { employeeNumber: "10400954", name: "이지민", position: "RN", positionRank: 4, sortOrder: 4 },
+    { employeeNumber: "10400962", name: "이동병", position: "RN", positionRank: 4, sortOrder: 5 },
+    { employeeNumber: "10400993", name: "강문영", position: "RN", positionRank: 4, sortOrder: 6 },
+    { employeeNumber: "10401055", name: "정은우", position: "RN", positionRank: 4, sortOrder: 7 },
+    { employeeNumber: "10401056", name: "신서영", position: "RN", positionRank: 4, sortOrder: 8 },
+    { employeeNumber: "10401071", name: "양은정", position: "RN", positionRank: 4, sortOrder: 9 },
+    { employeeNumber: "10401132", name: "장현지", position: "RN", positionRank: 4, sortOrder: 10 },
+    { employeeNumber: "10401137", name: "우영호", position: "RN", positionRank: 4, sortOrder: 11 },
+    { employeeNumber: "10401138", name: "김예림", position: "RN", positionRank: 4, sortOrder: 12 },
+    { employeeNumber: "10401120", name: "박성주", position: "RN", positionRank: 4, sortOrder: 13 },
+    { employeeNumber: "10400856", name: "조혜민", position: "RN", positionRank: 4, sortOrder: 14 },
+    { employeeNumber: "10400857", name: "구다해", position: "RN", positionRank: 4, sortOrder: 15 },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nurses: any[] = [];
   for (const n of nurseData) {
     const nurse = await prisma.nurse.upsert({
@@ -71,11 +66,11 @@ async function main() {
   }
   console.log("간호사 시드 완료");
 
-  // 4. 사용자 계정 생성
-  const passwordHash = await bcrypt.hash("password123", 10);
+  // 4. 시스템 사용자 계정 생성 (인증 없이 기본 사용자로 사용)
+  const passwordHash = "unused";
 
   const users = [
-    { loginId: "headnurse", name: "김미영", role: "HEAD_NURSE", nurseId: nurses[0].id, wardId: ward42.id },
+    { loginId: "headnurse", name: "진인숙", role: "HEAD_NURSE", nurseId: nurses[0].id, wardId: ward42.id },
     { loginId: "manager", name: "이정숙", role: "NURSING_MANAGER", nurseId: null, wardId: null },
     { loginId: "director", name: "박영희", role: "NURSING_DIRECTOR", nurseId: null, wardId: null },
     { loginId: "admin", name: "시스템관리자", role: "ADMIN", nurseId: null, wardId: null },
@@ -90,11 +85,6 @@ async function main() {
   }
   console.log("사용자 계정 시드 완료");
   console.log("\n=== 시드 데이터 적용 완료 ===");
-  console.log("로그인 계정:");
-  console.log("  headnurse / password123 (수간호사)");
-  console.log("  manager / password123 (간호과장)");
-  console.log("  director / password123 (간호부장)");
-  console.log("  admin / password123 (관리자)");
 }
 
 main()

@@ -141,7 +141,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="employeeNumber"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             사원번호 <span className="text-red-500">*</span>
           </label>
@@ -151,15 +151,15 @@ export default function NurseFormModal({
             name="employeeNumber"
             value={formData.employeeNumber}
             onChange={handleChange}
-            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
               errors.employeeNumber
                 ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
+                : "border-slate-300 dark:border-slate-600"
             }`}
             placeholder="사원번호를 입력하세요"
           />
           {errors.employeeNumber && (
-            <p className="mt-1 text-xs text-red-500">{errors.employeeNumber}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.employeeNumber}</p>
           )}
         </div>
 
@@ -167,7 +167,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             사원명 <span className="text-red-500">*</span>
           </label>
@@ -177,15 +177,15 @@ export default function NurseFormModal({
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
               errors.name
                 ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
+                : "border-slate-300 dark:border-slate-600"
             }`}
             placeholder="사원명을 입력하세요"
           />
           {errors.name && (
-            <p className="mt-1 text-xs text-red-500">{errors.name}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
           )}
         </div>
 
@@ -193,7 +193,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="position"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             직위 <span className="text-red-500">*</span>
           </label>
@@ -202,10 +202,10 @@ export default function NurseFormModal({
             name="position"
             value={formData.position}
             onChange={handleChange}
-            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
               errors.position
                 ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
+                : "border-slate-300 dark:border-slate-600"
             }`}
           >
             <option value="">직위를 선택하세요</option>
@@ -216,7 +216,7 @@ export default function NurseFormModal({
             ))}
           </select>
           {errors.position && (
-            <p className="mt-1 text-xs text-red-500">{errors.position}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.position}</p>
           )}
         </div>
 
@@ -224,7 +224,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="wardId"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             병동 <span className="text-red-500">*</span>
           </label>
@@ -233,10 +233,10 @@ export default function NurseFormModal({
             name="wardId"
             value={formData.wardId}
             onChange={handleChange}
-            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
               errors.wardId
                 ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
+                : "border-slate-300 dark:border-slate-600"
             }`}
           >
             <option value="">병동을 선택하세요</option>
@@ -247,7 +247,7 @@ export default function NurseFormModal({
             ))}
           </select>
           {errors.wardId && (
-            <p className="mt-1 text-xs text-red-500">{errors.wardId}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.wardId}</p>
           )}
         </div>
 
@@ -255,7 +255,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="hireDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             입사일
           </label>
@@ -265,7 +265,7 @@ export default function NurseFormModal({
             name="hireDate"
             value={formData.hireDate}
             onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
           />
         </div>
 
@@ -273,7 +273,7 @@ export default function NurseFormModal({
         <div>
           <label
             htmlFor="sortOrder"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-base font-medium text-slate-700 mb-1 dark:text-slate-300"
           >
             정렬순서
           </label>
@@ -283,7 +283,7 @@ export default function NurseFormModal({
             name="sortOrder"
             value={formData.sortOrder}
             onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             min={0}
           />
         </div>

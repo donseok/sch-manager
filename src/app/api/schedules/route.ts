@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const wardId = searchParams.get("wardId");
   const year = searchParams.get("year");
@@ -36,11 +29,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
     const { wardId, year, month } = body;
@@ -59,8 +47,15 @@ export async function POST(request: NextRequest) {
     });
 
     const version = existing ? existing.version + 1 : 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (session.user as any).id;
+
+    // Use the first available user as default creator
+    const defaultUser = await prisma.user.findFirst();
+    if (!defaultUser) {
+      return NextResponse.json(
+        { error: "No user found in system" },
+        { status: 500 }
+      );
+    }
 
     const schedule = await prisma.schedule.create({
       data: {
@@ -69,7 +64,7 @@ export async function POST(request: NextRequest) {
         month,
         version,
         status: "DRAFT",
-        createdById: userId,
+        createdById: defaultUser.id,
       },
       include: {
         ward: true,

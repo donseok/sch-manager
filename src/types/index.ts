@@ -6,7 +6,6 @@ import type {
   Schedule,
   ScheduleEntry,
   ScheduleSummary,
-  ScheduleApproval,
   ScheduleChangeLog,
   SchedulePrintLog,
 } from "@prisma/client";
@@ -19,7 +18,6 @@ export type {
   Schedule,
   ScheduleEntry,
   ScheduleSummary,
-  ScheduleApproval,
   ScheduleChangeLog,
   SchedulePrintLog,
 };
@@ -34,7 +32,6 @@ export type ScheduleWithRelations = Schedule & {
   confirmedBy?: Pick<User, "id" | "name"> | null;
   entries: ScheduleEntryWithNurse[];
   summaries: (ScheduleSummary & { nurse: Nurse })[];
-  approvals: (ScheduleApproval & { approver: Pick<User, "id" | "name"> })[];
 };
 
 export type NurseWithWard = Nurse & {
@@ -56,12 +53,4 @@ export type ScheduleGridData = {
     O: number;
     XO: number;
   };
-};
-
-export type SessionUser = {
-  id: string;
-  name: string;
-  role: string;
-  wardId: string | null;
-  wardName: string | null;
 };

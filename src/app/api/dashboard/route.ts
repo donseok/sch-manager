@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -16,9 +9,7 @@ export async function GET() {
   const [
     totalNurses,
     currentMonthSchedules,
-    pendingApprovals,
     recentSchedules,
-    pendingSchedules,
     recentChanges,
   ] = await Promise.all([
     // Total active nurses
@@ -31,15 +22,6 @@ export async function GET() {
       where: {
         year: currentYear,
         month: currentMonth,
-      },
-    }),
-
-    // Pending approvals count
-    prisma.schedule.count({
-      where: {
-        status: {
-          in: ["PENDING_MANAGER", "PENDING_DIRECTOR"],
-        },
       },
     }),
 
@@ -56,25 +38,6 @@ export async function GET() {
         { month: "desc" },
         { createdAt: "desc" },
       ],
-    }),
-
-    // Pending schedules (PENDING_MANAGER or PENDING_DIRECTOR), limit 10
-    prisma.schedule.findMany({
-      where: {
-        status: {
-          in: ["PENDING_MANAGER", "PENDING_DIRECTOR"],
-        },
-      },
-      take: 10,
-      include: {
-        ward: {
-          select: { wardName: true },
-        },
-        createdBy: {
-          select: { name: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
     }),
 
     // Recent 10 schedule change logs
@@ -104,9 +67,7 @@ export async function GET() {
   return NextResponse.json({
     totalNurses,
     currentMonthSchedules,
-    pendingApprovals,
     recentSchedules,
-    pendingSchedules,
     recentChanges,
   });
 }
