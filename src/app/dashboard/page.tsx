@@ -44,9 +44,9 @@ async function getDashboardData() {
 
   // Parallel queries
   const [schedule, allNurses, recentChanges] = await Promise.all([
-    // Current month schedule (latest version) with all entries
+    // Current month CONFIRMED schedule with all entries
     prisma.schedule.findFirst({
-      where: { wardId: ward.id, year, month },
+      where: { wardId: ward.id, year, month, status: "CONFIRMED" },
       orderBy: { version: "desc" },
       include: {
         entries: {

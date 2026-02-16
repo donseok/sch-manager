@@ -45,7 +45,7 @@ export async function PATCH(
 
     const schedule = await prisma.schedule.findUnique({
       where: { id: params.id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, wardId: true, year: true, month: true },
     });
 
     if (!schedule) {
@@ -58,6 +58,25 @@ export async function PATCH(
     if (action === "confirm") {
       if (schedule.status === "CONFIRMED") {
         return NextResponse.json({ error: "이미 확정된 근무표입니다." }, { status: 400 });
+      }
+
+      // Check if another confirmed schedule already exists for the same ward/year/month
+      const existingConfirmed = await prisma.schedule.findFirst({
+        where: {
+          wardId: schedule.wardId,
+          year: schedule.year,
+          month: schedule.month,
+          status: "CONFIRMED",
+          id: { not: params.id },
+        },
+        select: { version: true },
+      });
+
+      if (existingConfirmed) {
+        return NextResponse.json(
+          { error: `${schedule.year}년 ${schedule.month}월에 이미 확정된 근무표(v${existingConfirmed.version})가 있습니다. 기존 확정을 취소 후 다시 시도해주세요.` },
+          { status: 400 }
+        );
       }
 
       const updated = await prisma.schedule.update({

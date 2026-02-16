@@ -101,7 +101,7 @@ export default function ScheduleEditPage() {
   // Add/Remove nurse
   const [showAddNurseModal, setShowAddNurseModal] = useState(false);
   const [wardNurses, setWardNurses] = useState<
-    { id: string; name: string; employeeNumber: string; position: string }[]
+    { id: string; name: string; employeeNumber: string; position: string; sortOrder: number }[]
   >([]);
   const [selectedNurseId, setSelectedNurseId] = useState("");
   const [removeTarget, setRemoveTarget] = useState<{ nurseId: string; nurseName: string } | null>(null);
@@ -127,6 +127,7 @@ export default function ScheduleEditPage() {
           nurseName: string;
           employeeNumber: string;
           position: string;
+          sortOrder: number;
           entries: Record<number, string>;
         }
       >();
@@ -139,6 +140,7 @@ export default function ScheduleEditPage() {
             nurseName: entry.nurse.name,
             employeeNumber: entry.nurse.employeeNumber,
             position: entry.nurse.position,
+            sortOrder: entry.nurse.sortOrder,
             entries: {},
           });
         }
@@ -155,6 +157,7 @@ export default function ScheduleEditPage() {
             nurseName: summary.nurse.name,
             employeeNumber: summary.nurse.employeeNumber,
             position: summary.nurse.position,
+            sortOrder: summary.nurse.sortOrder,
             entries: {},
           });
         }
@@ -177,12 +180,8 @@ export default function ScheduleEditPage() {
         });
       }
 
-      // Sort by employee number
-      result.sort((a, b) => {
-        if (a.employeeNumber < b.employeeNumber) return -1;
-        if (a.employeeNumber > b.employeeNumber) return 1;
-        return 0;
-      });
+      // Sort by sortOrder
+      result.sort((a, b) => a.sortOrder - b.sortOrder);
 
       return result;
     },
@@ -207,7 +206,7 @@ export default function ScheduleEditPage() {
 
       // Always fetch ward nurses to ensure all appear in the grid
       const nursesRes = await fetch(`/api/nurses?wardId=${data.wardId}`);
-      const wardNurseList: { id: string; name: string; employeeNumber: string; position: string }[] =
+      const wardNurseList: { id: string; name: string; employeeNumber: string; position: string; sortOrder: number }[] =
         nursesRes.ok ? await nursesRes.json() : [];
 
       if (data.entries.length === 0) {
@@ -239,6 +238,7 @@ export default function ScheduleEditPage() {
             nurseName: nurse.name,
             employeeNumber: nurse.employeeNumber,
             position: nurse.position,
+            sortOrder: nurse.sortOrder,
             entries,
             summary: counts,
           };
@@ -257,14 +257,15 @@ export default function ScheduleEditPage() {
               nurseName: nurse.name,
               employeeNumber: nurse.employeeNumber,
               position: nurse.position,
+              sortOrder: nurse.sortOrder,
               entries: {},
               summary: { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 },
             });
           }
         }
 
-        // Re-sort by employee number
-        gridFromEntries.sort((a, b) => a.employeeNumber.localeCompare(b.employeeNumber));
+        // Re-sort by sortOrder
+        gridFromEntries.sort((a, b) => a.sortOrder - b.sortOrder);
         setGridData(gridFromEntries);
       }
     } catch (error) {
@@ -383,11 +384,12 @@ export default function ScheduleEditPage() {
         const existingIds = new Set(gridData.map((r) => r.nurseId));
         const available = nurses
           .filter((n: { id: string }) => !existingIds.has(n.id))
-          .map((n: { id: string; name: string; employeeNumber: string; position: string }) => ({
+          .map((n: { id: string; name: string; employeeNumber: string; position: string; sortOrder: number }) => ({
             id: n.id,
             name: n.name,
             employeeNumber: n.employeeNumber,
             position: n.position,
+            sortOrder: n.sortOrder,
           }));
         setWardNurses(available);
         setSelectedNurseId(available.length > 0 ? available[0].id : "");
@@ -433,6 +435,7 @@ export default function ScheduleEditPage() {
       nurseName: nurse.name,
       employeeNumber: nurse.employeeNumber,
       position: nurse.position,
+      sortOrder: nurse.sortOrder ?? 0,
       entries,
       summary: counts,
     });

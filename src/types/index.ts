@@ -43,6 +43,7 @@ export type ScheduleGridData = {
   nurseName: string;
   employeeNumber: string;
   position: string;
+  sortOrder: number;
   entries: Record<number, string>;
   summary: {
     D: number;
