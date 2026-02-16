@@ -402,7 +402,9 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
               </th>
             ))}
             {editable && onRemoveNurse && (
-              <th className="min-w-[36px] border border-slate-200 bg-slate-200 px-1 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-300" />
+              <th className="min-w-[36px] border border-slate-200 bg-slate-200 px-1 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                삭제
+              </th>
             )}
           </tr>
           {/* Row 2: Day of week */}
@@ -456,11 +458,9 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
         <tfoot>
           {/* 근무집계 header */}
           <tr className="bg-emerald-50 dark:bg-emerald-900/20">
-            <td className="sticky left-0 z-20 border border-slate-300 bg-emerald-50 dark:border-slate-600 dark:bg-emerald-900/20" />
-            <td className="sticky left-[80px] z-20 border border-slate-300 bg-emerald-50 px-2 py-2 text-center text-sm font-bold text-slate-800 dark:border-slate-600 dark:bg-emerald-900/20 dark:text-emerald-200">
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-50 px-2 py-2 text-center text-sm font-bold text-slate-800 dark:border-slate-600 dark:bg-emerald-900/20 dark:text-emerald-200">
               근무집계
             </td>
-            <td className="sticky left-[152px] z-20 border border-slate-300 bg-emerald-50 dark:border-slate-600 dark:bg-emerald-900/20" />
             {dayInfo.map(({ day, index }) => (
               <td
                 key={`dsm-h-${day}`}
@@ -479,11 +479,9 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           {/* D, E, N, T, X rows */}
           {DAILY_SHIFT_TYPES.map((type) => (
             <tr key={`dsm-${type}`} className="bg-emerald-50/50 dark:bg-emerald-900/10">
-              <td className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-900/10" />
-              <td className="sticky left-[80px] z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
+              <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
                 {type}
               </td>
-              <td className="sticky left-[152px] z-20 border border-slate-200 bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-900/10" />
               {days.map((day) => (
                 <td
                   key={`dsm-${type}-${day}`}
@@ -502,11 +500,9 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           ))}
           {/* T + X row */}
           <tr className="bg-emerald-50/50 dark:bg-emerald-900/10">
-            <td className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-900/10" />
-            <td className="sticky left-[80px] z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
               T + X
             </td>
-            <td className="sticky left-[152px] z-20 border border-slate-200 bg-emerald-50/50 dark:border-slate-700 dark:bg-emerald-900/10" />
             {days.map((day) => (
               <td
                 key={`dsm-tx-${day}`}
@@ -524,11 +520,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           </tr>
           {/* 일별 총인원 row */}
           <tr className="bg-emerald-100 dark:bg-emerald-900/30">
-            <td className="sticky left-0 z-20 border border-slate-300 bg-emerald-100 dark:border-slate-600 dark:bg-emerald-900/30" />
-            <td
-              colSpan={2}
-              className="sticky left-[80px] z-20 border border-slate-300 bg-emerald-100 px-2 py-2 text-center text-xs font-bold text-slate-800 whitespace-nowrap dark:border-slate-600 dark:bg-emerald-900/30 dark:text-emerald-200"
-            >
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-100 px-2 py-2 text-center text-xs font-bold text-slate-800 whitespace-nowrap dark:border-slate-600 dark:bg-emerald-900/30 dark:text-emerald-200">
               일별 총인원(명)
             </td>
             {days.map((day) => (

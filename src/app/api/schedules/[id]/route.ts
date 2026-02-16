@@ -35,6 +35,81 @@ export async function GET(
   return NextResponse.json(schedule);
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const { action } = body;
+
+    const schedule = await prisma.schedule.findUnique({
+      where: { id: params.id },
+      select: { id: true, status: true },
+    });
+
+    if (!schedule) {
+      return NextResponse.json({ error: "근무표를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    const defaultUser = await prisma.user.findFirst();
+    const userId = defaultUser?.id || "system";
+
+    if (action === "confirm") {
+      if (schedule.status === "CONFIRMED") {
+        return NextResponse.json({ error: "이미 확정된 근무표입니다." }, { status: 400 });
+      }
+
+      const updated = await prisma.schedule.update({
+        where: { id: params.id },
+        data: {
+          status: "CONFIRMED",
+          confirmedAt: new Date(),
+          confirmedById: userId,
+        },
+        include: {
+          entries: { include: { nurse: true }, orderBy: [{ nurseId: "asc" }, { workDate: "asc" }] },
+          summaries: { include: { nurse: true } },
+          ward: true,
+          createdBy: { select: { id: true, name: true } },
+          confirmedBy: { select: { id: true, name: true } },
+        },
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    if (action === "unconfirm") {
+      if (schedule.status !== "CONFIRMED") {
+        return NextResponse.json({ error: "확정 상태가 아닌 근무표입니다." }, { status: 400 });
+      }
+
+      const updated = await prisma.schedule.update({
+        where: { id: params.id },
+        data: {
+          status: "DRAFT",
+          confirmedAt: null,
+          confirmedById: null,
+        },
+        include: {
+          entries: { include: { nurse: true }, orderBy: [{ nurseId: "asc" }, { workDate: "asc" }] },
+          summaries: { include: { nurse: true } },
+          ward: true,
+          createdBy: { select: { id: true, name: true } },
+          confirmedBy: { select: { id: true, name: true } },
+        },
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
+  } catch (error) {
+    console.error("Failed to update schedule:", error);
+    return NextResponse.json({ error: "근무표 상태 변경에 실패했습니다." }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

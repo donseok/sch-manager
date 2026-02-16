@@ -23,7 +23,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { entries } = body;
+    const { entries, nurseIds } = body;
 
     if (!entries || !Array.isArray(entries)) {
       return NextResponse.json(
@@ -40,6 +40,13 @@ export async function PUT(
       return NextResponse.json(
         { error: "Schedule not found" },
         { status: 404 }
+      );
+    }
+
+    if (schedule.status === "CONFIRMED") {
+      return NextResponse.json(
+        { error: "확정된 근무표는 수정할 수 없습니다. 확정 취소 후 수정해주세요." },
+        { status: 400 }
       );
     }
 
@@ -213,6 +220,16 @@ export async function PUT(
           countXO,
           totalWorkingDays,
           totalOffDays,
+        },
+      });
+    }
+
+    // Clean up summaries for nurses removed from the schedule
+    if (nurseIds && Array.isArray(nurseIds) && nurseIds.length > 0) {
+      await prisma.scheduleSummary.deleteMany({
+        where: {
+          scheduleId: params.id,
+          nurseId: { notIn: nurseIds },
         },
       });
     }

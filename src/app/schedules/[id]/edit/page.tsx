@@ -28,6 +28,8 @@ import {
   List,
   UserPlus,
   RotateCcw,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import { STATUS_LABELS, STATUS_COLORS } from "@/lib/utils";
@@ -88,6 +90,13 @@ export default function ScheduleEditPage() {
 
   // Reset confirmation
   const [showResetModal, setShowResetModal] = useState(false);
+
+  // Confirm/Unconfirm
+  const [confirming, setConfirming] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showUnconfirmModal, setShowUnconfirmModal] = useState(false);
+
+  const isConfirmed = schedule?.status === "CONFIRMED";
 
   // Add/Remove nurse
   const [showAddNurseModal, setShowAddNurseModal] = useState(false);
@@ -300,10 +309,13 @@ export default function ScheduleEditPage() {
         }
       }
 
+      // Send nurseIds so backend can clean up removed nurses' summaries
+      const nurseIds = gridData.map((row) => row.nurseId);
+
       const res = await fetch(`/api/schedules/${scheduleId}/entries`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entries }),
+        body: JSON.stringify({ entries, nurseIds }),
       });
 
       if (res.ok) {
@@ -429,9 +441,9 @@ export default function ScheduleEditPage() {
     setSelectedNurseId("");
   }, [selectedNurseId, wardNurses, schedule, addNurseToGrid]);
 
-  // Remove nurse handler (opens confirmation)
-  const handleRemoveNurse = useCallback((nurseId: string, nurseName: string) => {
-    setRemoveTarget({ nurseId, nurseName });
+  // Remove nurse handler (disabled - coming soon)
+  const handleRemoveNurse = useCallback((_nurseId: string, _nurseName: string) => {
+    alert("준비중");
   }, []);
 
   // Confirm remove nurse
@@ -440,6 +452,56 @@ export default function ScheduleEditPage() {
     removeNurseFromGrid(removeTarget.nurseId);
     setRemoveTarget(null);
   }, [removeTarget, removeNurseFromGrid]);
+
+  // Confirm schedule
+  const handleConfirm = useCallback(async () => {
+    setConfirming(true);
+    try {
+      const res = await fetch(`/api/schedules/${scheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm" }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSchedule(updated);
+        setSaveMessage({ type: "success", text: "근무표가 확정되었습니다." });
+      } else {
+        const err = await res.json();
+        setSaveMessage({ type: "error", text: err.error || "확정에 실패했습니다." });
+      }
+    } catch {
+      setSaveMessage({ type: "error", text: "확정에 실패했습니다." });
+    } finally {
+      setConfirming(false);
+      setShowConfirmModal(false);
+    }
+  }, [scheduleId]);
+
+  // Unconfirm schedule
+  const handleUnconfirm = useCallback(async () => {
+    setConfirming(true);
+    try {
+      const res = await fetch(`/api/schedules/${scheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unconfirm" }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSchedule(updated);
+        setSaveMessage({ type: "success", text: "확정이 취소되었습니다." });
+      } else {
+        const err = await res.json();
+        setSaveMessage({ type: "error", text: err.error || "확정 취소에 실패했습니다." });
+      }
+    } catch {
+      setSaveMessage({ type: "error", text: "확정 취소에 실패했습니다." });
+    } finally {
+      setConfirming(false);
+      setShowUnconfirmModal(false);
+    }
+  }, [scheduleId]);
 
   // Reset: clear entries for all nurses except HN/CN
   const handleReset = useCallback(() => {
@@ -502,7 +564,10 @@ export default function ScheduleEditPage() {
             {schedule.year}년 {schedule.month}월
           </span>
           <span className="text-sm text-slate-400 dark:text-slate-500">v{schedule.version}</span>
-          {isDirty && (
+          <Badge className={STATUS_COLORS[schedule.status] || ""}>
+            {STATUS_LABELS[schedule.status] || schedule.status}
+          </Badge>
+          {isDirty && !isConfirmed && (
             <span className="text-sm font-medium text-orange-500">
               (저장되지 않은 변경사항)
             </span>
@@ -527,12 +592,59 @@ export default function ScheduleEditPage() {
           <Button
             onClick={handleSave}
             loading={saving}
-            disabled={!isDirty}
+            disabled={!isDirty || isConfirmed}
             size="sm"
           >
             <Save className="mr-1 h-4 w-4" />
             저장
           </Button>
+
+          {/* Confirm / Unconfirm button */}
+          {isConfirmed ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowUnconfirmModal(true)}
+              loading={confirming}
+            >
+              <Unlock className="mr-1 h-4 w-4" />
+              확정 취소
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (isDirty) {
+                  setSaveMessage({ type: "error", text: "저장되지 않은 변경사항이 있습니다. 먼저 저장해주세요." });
+                  return;
+                }
+                // Validate: every nurse must have all days filled
+                const days = getDaysInMonth(schedule.year, schedule.month);
+                const incomplete: string[] = [];
+                for (const row of gridData) {
+                  for (let d = 1; d <= days; d++) {
+                    if (!row.entries[d]) {
+                      incomplete.push(row.nurseName);
+                      break;
+                    }
+                  }
+                }
+                if (incomplete.length > 0) {
+                  setSaveMessage({
+                    type: "error",
+                    text: `빈 근무가 있는 사원: ${incomplete.join(", ")}`,
+                  });
+                  return;
+                }
+                setShowConfirmModal(true);
+              }}
+              loading={confirming}
+            >
+              <Lock className="mr-1 h-4 w-4" />
+              확정
+            </Button>
+          )}
 
           {/* Print button */}
           <Button variant="ghost" size="sm" onClick={handlePrint}>
@@ -586,6 +698,7 @@ export default function ScheduleEditPage() {
             variant="ghost"
             size="sm"
             onClick={handleOpenAddNurse}
+            disabled={isConfirmed}
           >
             <UserPlus className="mr-1 h-4 w-4" />
             사원 추가
@@ -596,6 +709,7 @@ export default function ScheduleEditPage() {
             variant="ghost"
             size="sm"
             onClick={() => setShowResetModal(true)}
+            disabled={isConfirmed}
           >
             <RotateCcw className="mr-1 h-4 w-4" />
             초기화
@@ -622,12 +736,12 @@ export default function ScheduleEditPage() {
 
       {/* Scrollable content: Grid + Change History */}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto print:overflow-visible">
-      {/* Schedule Grid - always editable */}
+      {/* Schedule Grid */}
       <ScheduleGrid
         year={schedule.year}
         month={schedule.month}
-        editable={true}
-        onRemoveNurse={handleRemoveNurse}
+        editable={!isConfirmed}
+        onRemoveNurse={isConfirmed ? undefined : handleRemoveNurse}
       />
 
       {/* Change History */}
@@ -871,6 +985,69 @@ export default function ScheduleEditPage() {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
           <p className="text-base text-slate-600 dark:text-slate-300">
             수간호사, 책임간호사를 제외한 모든 사원의 근무 데이터를 초기화합니다. 이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?
+          </p>
+        </div>
+      </Modal>
+
+      {/* Confirm modal */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="근무표 확정"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              loading={confirming}
+            >
+              확정
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          <Lock className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
+          <p className="text-base text-slate-600 dark:text-slate-300">
+            근무표를 확정하시겠습니까? 확정 후에는 수정 및 저장이 불가능합니다.
+            <br />
+            <span className="text-sm text-slate-400">확정 취소 버튼으로 다시 수정할 수 있습니다.</span>
+          </p>
+        </div>
+      </Modal>
+
+      {/* Unconfirm modal */}
+      <Modal
+        isOpen={showUnconfirmModal}
+        onClose={() => setShowUnconfirmModal(false)}
+        title="확정 취소"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setShowUnconfirmModal(false)}
+            >
+              취소
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleUnconfirm}
+              loading={confirming}
+            >
+              확정 취소
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          <Unlock className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
+          <p className="text-base text-slate-600 dark:text-slate-300">
+            근무표 확정을 취소하시겠습니까? 취소 후 수정 및 저장이 가능해집니다.
           </p>
         </div>
       </Modal>

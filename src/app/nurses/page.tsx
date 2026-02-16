@@ -206,7 +206,7 @@ export default function NursesPage() {
       </div>
 
       {/* Table - scrollable */}
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
@@ -217,10 +217,9 @@ export default function NursesPage() {
             <p className="text-base">등록된 간호사가 없습니다.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
             <table className="w-full text-base">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 dark:bg-slate-700/50 dark:border-slate-700">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
                   <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                     사원번호
                   </th>
@@ -290,7 +289,6 @@ export default function NursesPage() {
                 })}
               </tbody>
             </table>
-          </div>
         )}
       </div>
 

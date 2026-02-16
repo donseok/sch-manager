@@ -441,7 +441,7 @@ export default async function DashboardPage() {
   const maxPosition = Math.max(...data.byPosition.map((p) => p.count), 1);
 
   return (
-    <div className="space-y-6 overflow-y-auto">
+    <div className="space-y-6">
       {/* ── Header ── */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
