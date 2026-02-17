@@ -354,31 +354,31 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
   }
 
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-lg dark:border-slate-700">
+    <div className="overflow-auto max-h-[calc(100vh-280px)] border border-slate-200 rounded-lg dark:border-slate-700">
       <table
         ref={tableRef}
         className="border-collapse text-sm select-none"
         onMouseDown={handleTableMouseDown}
         onMouseOver={handleTableMouseOver}
       >
-        <thead>
+        <thead className="sticky top-0 z-30">
           {/* Row 1: Column headers */}
           <tr className="bg-slate-100 dark:bg-slate-800">
             <th
               rowSpan={2}
-              className="sticky left-0 z-20 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="sticky left-0 z-40 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               사원번호
             </th>
             <th
               rowSpan={2}
-              className="sticky left-[80px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="sticky left-[80px] z-40 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               사원명
             </th>
             <th
               rowSpan={2}
-              className="sticky left-[152px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="sticky left-[152px] z-40 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               직위
             </th>
@@ -387,7 +387,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
                 key={`h1-${day}`}
                 className={`min-w-[40px] border border-slate-200 px-1 py-2 text-center font-semibold dark:border-slate-700 ${getDayBgClass(
                   index
-                )} ${getDayTextClass(index)}`}
+                ) || "bg-slate-100 dark:bg-slate-800"} ${getDayTextClass(index)}`}
               >
                 {day}
               </th>
@@ -423,7 +423,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
                 key={`h2-${day}`}
                 className={`border border-slate-200 px-1 py-1 text-center text-[11px] font-medium dark:border-slate-700 ${getDayBgClass(
                   index
-                )} ${getDayTextClass(index)}`}
+                ) || "bg-slate-50 dark:bg-slate-800/50"} ${getDayTextClass(index)}`}
               >
                 {label}
               </th>
