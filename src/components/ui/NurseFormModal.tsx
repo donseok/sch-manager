@@ -134,7 +134,7 @@ export default function NurseFormModal({
                                     <Button onClick={handleSubmit} loading={saving}>
                                       {isEdit ? "수정" : "등록"}
                                     </Button>
-                          </>>
+                          </>
                 }
                       >
               <form onSubmit={handleSubmit} className="space-y-4">
