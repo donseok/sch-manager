@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // 병동 정보
@@ -26,23 +27,23 @@ model Ward {
 
 // 간호사 사원 정보
 model Nurse {
-  id               String   @id @default(uuid())
-  employeeNumber   String   @unique @map("employee_number")
+  id               String    @id @default(uuid())
+  employeeNumber   String    @unique @map("employee_number")
   name             String
   position         String
-  positionRank     Int      @default(0) @map("position_rank")
-  wardId           String   @map("ward_id")
-  employmentStatus String   @default("ACTIVE") @map("employment_status")
+  positionRank     Int       @default(0) @map("position_rank")
+  wardId           String    @map("ward_id")
+  employmentStatus String    @default("ACTIVE") @map("employment_status")
   hireDate         DateTime? @map("hire_date")
-  sortOrder        Int      @default(0) @map("sort_order")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  sortOrder        Int       @default(0) @map("sort_order")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  ward             Ward     @relation(fields: [wardId], references: [id])
-  scheduleEntries  ScheduleEntry[]
+  ward              Ward                 @relation(fields: [wardId], references: [id])
+  scheduleEntries   ScheduleEntry[]
   scheduleSummaries ScheduleSummary[]
-  changeLogs       ScheduleChangeLog[]
-  user             User?
+  changeLogs        ScheduleChangeLog[]
+  user              User?
 
   @@map("nurses")
 }
@@ -61,10 +62,10 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  nurse              Nurse?    @relation(fields: [nurseId], references: [id])
-  ward               Ward?     @relation(fields: [wardId], references: [id])
-  createdSchedules   Schedule[] @relation("ScheduleCreator")
-  confirmedSchedules Schedule[] @relation("ScheduleConfirmer")
+  nurse              Nurse?              @relation(fields: [nurseId], references: [id])
+  ward               Ward?               @relation(fields: [wardId], references: [id])
+  createdSchedules   Schedule[]          @relation("ScheduleCreator")
+  confirmedSchedules Schedule[]          @relation("ScheduleConfirmer")
   approvals          ScheduleApproval[]
   changeLogs         ScheduleChangeLog[]
   printLogs          SchedulePrintLog[]
@@ -89,27 +90,27 @@ model ShiftType {
 
 // 월간 근무확정표
 model Schedule {
-  id          String    @id @default(uuid())
-  wardId      String    @map("ward_id")
-  year        Int
-  month       Int
-  version     Int       @default(1)
-  status      String    @default("DRAFT")
-  createdById String    @map("created_by")
-  confirmedAt DateTime? @map("confirmed_at")
-  confirmedById String? @map("confirmed_by")
-  notes       String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id            String    @id @default(uuid())
+  wardId        String    @map("ward_id")
+  year          Int
+  month         Int
+  version       Int       @default(1)
+  status        String    @default("DRAFT")
+  createdById   String    @map("created_by")
+  confirmedAt   DateTime? @map("confirmed_at")
+  confirmedById String?   @map("confirmed_by")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  ward        Ward      @relation(fields: [wardId], references: [id])
-  createdBy   User      @relation("ScheduleCreator", fields: [createdById], references: [id])
-  confirmedBy User?     @relation("ScheduleConfirmer", fields: [confirmedById], references: [id])
-  entries     ScheduleEntry[]
-  summaries   ScheduleSummary[]
-  approvals   ScheduleApproval[]
-  changeLogs  ScheduleChangeLog[]
-  printLogs   SchedulePrintLog[]
+  ward       Ward                 @relation(fields: [wardId], references: [id])
+  createdBy  User                 @relation("ScheduleCreator", fields: [createdById], references: [id])
+  confirmedBy User?               @relation("ScheduleConfirmer", fields: [confirmedById], references: [id])
+  entries    ScheduleEntry[]
+  summaries  ScheduleSummary[]
+  approvals  ScheduleApproval[]
+  changeLogs ScheduleChangeLog[]
+  printLogs  SchedulePrintLog[]
 
   @@unique([wardId, year, month, version])
   @@map("schedules")
@@ -126,8 +127,8 @@ model ScheduleEntry {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  schedule      Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  nurse         Nurse    @relation(fields: [nurseId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse    Nurse    @relation(fields: [nurseId], references: [id])
 
   @@unique([scheduleId, nurseId, workDate])
   @@map("schedule_entries")
@@ -150,8 +151,8 @@ model ScheduleSummary {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  schedule         Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  nurse            Nurse    @relation(fields: [nurseId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse    Nurse    @relation(fields: [nurseId], references: [id])
 
   @@unique([scheduleId, nurseId])
   @@map("schedule_summaries")
@@ -168,8 +169,8 @@ model ScheduleApproval {
   comment      String?
   actedAt      DateTime @default(now()) @map("acted_at")
 
-  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  approver     User     @relation(fields: [approverId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  approver User     @relation(fields: [approverId], references: [id])
 
   @@map("schedule_approvals")
 }
@@ -188,9 +189,9 @@ model ScheduleChangeLog {
   versionAfter      Int      @map("version_after")
   changedAt         DateTime @default(now()) @map("changed_at")
 
-  schedule          Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  nurse             Nurse    @relation(fields: [nurseId], references: [id])
-  changedBy         User     @relation(fields: [changedById], references: [id])
+  schedule  Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  nurse     Nurse    @relation(fields: [nurseId], references: [id])
+  changedBy User     @relation(fields: [changedById], references: [id])
 
   @@map("schedule_change_logs")
 }
@@ -203,8 +204,8 @@ model SchedulePrintLog {
   printFormat String   @default("PDF") @map("print_format")
   printedAt   DateTime @default(now()) @map("printed_at")
 
-  schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  printedBy   User     @relation(fields: [printedById], references: [id])
+  schedule  Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  printedBy User     @relation(fields: [printedById], references: [id])
 
   @@map("schedule_print_logs")
 }
