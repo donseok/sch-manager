@@ -364,13 +364,22 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
         <thead>
           {/* Row 1: Column headers */}
           <tr className="bg-slate-100 dark:bg-slate-800">
-            <th className="sticky left-0 z-20 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-0 z-20 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               사원번호
             </th>
-            <th className="sticky left-[80px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-[80px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               사원명
             </th>
-            <th className="sticky left-[152px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-[152px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               직위
             </th>
             {dayInfo.map(({ day, index }) => (
@@ -409,9 +418,6 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           </tr>
           {/* Row 2: Day of week */}
           <tr className="bg-slate-50 dark:bg-slate-800/50">
-            <th className="sticky left-0 z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
-            <th className="sticky left-[80px] z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
-            <th className="sticky left-[152px] z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
             {dayInfo.map(({ day, label, index }) => (
               <th
                 key={`h2-${day}`}
