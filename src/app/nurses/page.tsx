@@ -188,21 +188,21 @@ export default function NursesPage() {
           {/* API 에러 배너 */}
           {apiError && (
                   <div className="shrink-0 flex items-center justify-between rounded-lg border border-red-300 bg-red-50 px-4 py-3 dark:bg-red-900/30 dark:border-red-700">
-                            <p className="text-sm text-red-800 dark:text-red-200">{apiError}</p>p>
+                            <p className="text-sm text-red-800 dark:text-red-200">{apiError}</p>
                             <Button variant="ghost" size="sm" onClick={handleRetry}>
                                         다시 시도
-                            </Button>Button>
-                  </div>div>
+                            </Button>
+                  </div>
               )}
         
           {/* Page title and action - fixed */}
               <div className="shrink-0 flex items-center justify-between">
-                      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">간호사 관리</h1>h1>
+                      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">간호사 관리</h1>
                       <Button onClick={handleCreate}>
                                 <Plus className="mr-1.5 h-4 w-4" />
                                 신규 등록
-                      </Button>Button>
-              </div>div>
+                      </Button>
+              </div>
         
           {/* Filters - fixed */}
               <div className="shrink-0 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -216,49 +216,49 @@ export default function NursesPage() {
                                               onChange={(e) => setSearchName(e.target.value)}
                                               className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                                             />
-                      </div>div>
+                      </div>
               
                 {/* Ward filter - 42병동 고정 */}
                       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-base text-slate-700 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100">
                                 42병동
-                      </div>div>
-              </div>div>
+                      </div>
+              </div>
         
           {/* Table - scrollable */}
               <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
                                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-                    </div>div>
+                    </div>
                   ) : filteredNurses.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                                 <Users className="mb-3 h-12 w-12" />
-                                <p className="text-base">등록된 간호사가 없습니다.</p>p>
-                    </div>div>
+                                <p className="text-base">등록된 간호사가 없습니다.</p>
+                    </div>
                   ) : (
                     <table className="w-full text-base">
                                 <thead className="sticky top-0 z-10">
                                               <tr className="border-b border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
                                                               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                                                                                 사원번호
-                                                              </th>th>
+                                                              </th>
                                                               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                                                                                 사원명
-                                                              </th>th>
+                                                              </th>
                                                               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                                                                                 직위
-                                                              </th>th>
+                                                              </th>
                                                               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                                                                                 병동
-                                                              </th>th>
+                                                              </th>
                                                               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                                                                                 상태
-                                                              </th>th>
+                                                              </th>
                                                               <th className="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">
                                                                                 관리
-                                                              </th>th>
-                                              </tr>tr>
-                                </thead>thead>
+                                                              </th>
+                                              </tr>
+                                </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                   {filteredNurses.map((nurse) => {
                                       const statusConfig =
@@ -271,21 +271,21 @@ export default function NursesPage() {
                                                                               >
                                                                               <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                                                                                 {nurse.employeeNumber}
-                                                                              </td>td>
+                                                                              </td>
                                                                               <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                                                                                 {nurse.name}
-                                                                              </td>td>
+                                                                              </td>
                                                                               <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                                                                                 {POSITION_LABELS[nurse.position] || nurse.position}
-                                                                              </td>td>
+                                                                              </td>
                                                                               <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                                                                                 {nurse.ward.wardName}
-                                                                              </td>td>
+                                                                              </td>
                                                                               <td className="px-4 py-3">
                                                                                                     <Badge variant={statusConfig.variant}>
                                                                                                       {statusConfig.label}
-                                                                                                      </Badge>Badge>
-                                                                              </td>td>
+                                                                                                      </Badge>
+                                                                              </td>
                                                                               <td className="px-4 py-3">
                                                                                                     <div className="flex items-center justify-center gap-2">
                                                                                                                             <Button
@@ -294,23 +294,23 @@ export default function NursesPage() {
                                                                                                                                                         onClick={() => handleEdit(nurse)}
                                                                                                                                                       >
                                                                                                                                                       수정
-                                                                                                                              </Button>Button>
+                                                                                                                              </Button>
                                                                                                                             <Button
                                                                                                                                                         variant="danger"
                                                                                                                                                         size="sm"
                                                                                                                                                         onClick={() => handleDelete(nurse)}
                                                                                                                                                       >
                                                                                                                                                       삭제
-                                                                                                                              </Button>Button>
-                                                                                                      </div>div>
-                                                                              </td>td>
-                                                          </tr>tr>
+                                                                                                                              </Button>
+                                                                                                      </div>
+                                                                              </td>
+                                                          </tr>
                                                         );
                     })}
-                                </tbody>tbody>
-                    </table>table>
+                                </tbody>
+                    </table>
                       )}
-              </div>div>
+              </div>
         
           {/* Create/Edit Modal */}
               <NurseFormModal
@@ -334,25 +334,25 @@ export default function NursesPage() {
                             <div className="relative z-10 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl mx-4 dark:bg-slate-800">
                                         <h3 className="text-xl font-semibold text-slate-900 mb-2 dark:text-slate-100">
                                                       삭제 확인
-                                        </h3>h3>
+                                        </h3>
                                         <p className="text-base text-slate-600 mb-6 dark:text-slate-300">
-                                                      <span className="font-medium">{deleteTarget.name}</span>span>{" "}
+                                                      <span className="font-medium">{deleteTarget.name}</span>{" "}
                                                       간호사를 퇴직 처리하시겠습니까?
-                                        </p>p>
+                                        </p>
                                         <div className="flex items-center justify-end gap-3">
                                                       <Button
                                                                         variant="secondary"
                                                                         onClick={() => setDeleteTarget(null)}
                                                                       >
                                                                       취소
-                                                      </Button>Button>
+                                                      </Button>
                                                       <Button variant="danger" onClick={confirmDelete}>
                                                                       삭제
-                                                      </Button>Button>
-                                        </div>div>
-                            </div>div>
-                  </div>div>
+                                                      </Button>
+                                        </div>
+                            </div>
+                  </div>
               )}
-        </div>div>
+        </div>
       );
 }</div>
