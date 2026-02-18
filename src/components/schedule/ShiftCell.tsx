@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { SHIFT_COLORS } from "@/lib/utils";
 
-const SHIFT_OPTIONS = ["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "B"] as const;
+const SHIFT_OPTIONS = ["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "C", "B"] as const;
 
 const SHIFT_LABELS: Record<string, string> = {
   D: "D (주간)",
@@ -15,6 +15,7 @@ const SHIFT_LABELS: Record<string, string> = {
   M: "M (공휴)",
   CS2: "CS2 (공휴)",
   C6: "C6 (공휴)",
+  C: "C (공휴)",
   B: "B (공휴)",
 };
 

@@ -32,7 +32,7 @@ const SUMMARY_LABELS: Record<string, string> = {
 
 const DAILY_SHIFT_TYPES = ["D", "E", "N", "T", "X"] as const;
 
-const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "B", ""]);
+const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "C", "B", ""]);
 
 // Extra derived stat columns shown after the main summary
 const EXTRA_STAT_KEYS = ["WE", "CON", "HRS"] as const;

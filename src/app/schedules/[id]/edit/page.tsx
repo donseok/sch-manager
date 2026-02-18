@@ -45,6 +45,7 @@ const SHIFT_CODES = [
   { code: "M", label: "공휴" },
   { code: "CS2", label: "공휴" },
   { code: "C6", label: "공휴" },
+  { code: "C", label: "공휴" },
   { code: "B", label: "공휴" },
 ];
 
