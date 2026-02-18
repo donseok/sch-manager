@@ -203,18 +203,15 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Keyboard handlers: Ctrl+C / Ctrl+V
+  // Ctrl+C: Copy selection
   useEffect(() => {
     if (!editable) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if an input/textarea/select is focused
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       const isCtrl = e.ctrlKey || e.metaKey;
-
-      // Ctrl+C: Copy
       if (isCtrl && e.key === "c" && selectionBounds) {
         e.preventDefault();
         const { minRow, maxRow, minDay, maxDay } = selectionBounds;
@@ -228,56 +225,65 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           }
           rows.push(cols.join("\t"));
         }
-        const text = rows.join("\n");
-        navigator.clipboard.writeText(text);
-      }
-
-      // Ctrl+V: Paste
-      if (isCtrl && e.key === "v" && selectionAnchor) {
-        e.preventDefault();
-        navigator.clipboard.readText().then((text) => {
-          if (!text) return;
-          const pasteRows = text.split(/\r?\n/).filter((line) => line.length > 0 || text.split(/\r?\n/).length === 1);
-          const updates: { nurseId: string; day: number; shiftCode: string }[] = [];
-
-          for (let r = 0; r < pasteRows.length; r++) {
-            const rowIndex = selectionAnchor.row + r;
-            if (rowIndex >= gridData.length) break;
-            const rowData = gridData[rowIndex];
-            const values = pasteRows[r].split("\t");
-
-            for (let c = 0; c < values.length; c++) {
-              const day = selectionAnchor.day + c;
-              if (day > daysInMonth) break;
-              const val = values[c].trim().toUpperCase();
-              if (VALID_SHIFT_CODES.has(val)) {
-                updates.push({
-                  nurseId: rowData.nurseId,
-                  day,
-                  shiftCode: val,
-                });
-              }
-            }
-          }
-
-          if (updates.length > 0) {
-            updateCells(updates);
-            // Update selection to cover pasted area
-            setSelectionEnd({
-              row: Math.min(selectionAnchor.row + pasteRows.length - 1, gridData.length - 1),
-              day: Math.min(
-                selectionAnchor.day + Math.max(...pasteRows.map((r) => r.split("\t").length)) - 1,
-                daysInMonth
-              ),
-            });
-          }
-        });
+        navigator.clipboard.writeText(rows.join("\n"));
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editable, selectionBounds, selectionAnchor, gridData, daysInMonth, updateCells]);
+  }, [editable, selectionBounds, gridData]);
+
+  // Ctrl+V: Paste from clipboard (uses paste event for reliable clipboard access)
+  useEffect(() => {
+    if (!editable) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (!selectionAnchor) return;
+
+      e.preventDefault();
+      const text = e.clipboardData?.getData("text/plain");
+      if (!text) return;
+
+      const pasteRows = text.split(/\r?\n/).filter((line) => line.length > 0);
+      const updates: { nurseId: string; day: number; shiftCode: string }[] = [];
+
+      for (let r = 0; r < pasteRows.length; r++) {
+        const rowIndex = selectionAnchor.row + r;
+        if (rowIndex >= gridData.length) break;
+        const rowData = gridData[rowIndex];
+        const values = pasteRows[r].split("\t");
+
+        for (let c = 0; c < values.length; c++) {
+          const day = selectionAnchor.day + c;
+          if (day > daysInMonth) break;
+          const val = values[c].trim().toUpperCase();
+          if (val) {
+            updates.push({
+              nurseId: rowData.nurseId,
+              day,
+              shiftCode: val,
+            });
+          }
+        }
+      }
+
+      if (updates.length > 0) {
+        updateCells(updates);
+        setSelectionEnd({
+          row: Math.min(selectionAnchor.row + pasteRows.length - 1, gridData.length - 1),
+          day: Math.min(
+            selectionAnchor.day + Math.max(...pasteRows.map((r) => r.split("\t").length)) - 1,
+            daysInMonth
+          ),
+        });
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [editable, selectionAnchor, gridData, daysInMonth, updateCells]);
 
   // Daily shift summary calculation
   const dailySummary = useMemo(() => {
