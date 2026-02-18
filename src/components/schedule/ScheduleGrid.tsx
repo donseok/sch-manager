@@ -32,7 +32,7 @@ const SUMMARY_LABELS: Record<string, string> = {
 
 const DAILY_SHIFT_TYPES = ["D", "E", "N", "T", "X"] as const;
 
-const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "B", ""]);
+const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "B", ""]);
 
 // Extra derived stat columns shown after the main summary
 const EXTRA_STAT_KEYS = ["WE", "CON", "HRS"] as const;
@@ -42,13 +42,12 @@ const EXTRA_STAT_LABELS: Record<string, string> = {
   HRS: "시간",
 };
 
-const WORKING_CODES = new Set(["D", "E", "N", "T", "B"]);
+const WORKING_CODES = new Set(["D", "E", "N", "T"]);
 const HOURS_PER_SHIFT = 8;
 
 function computeExtraStats(
   entries: Record<number, string>,
-  dayInfo: { day: number; index: number }[],
-  daysInMonth: number
+  dayInfo: { day: number; index: number }[]
 ): { WE: number; CON: number; HRS: number } {
   let weekendWork = 0;
   let maxConsecutive = 0;
@@ -385,7 +384,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
             {dayInfo.map(({ day, index }) => (
               <th
                 key={`h1-${day}`}
-                className={`min-w-[40px] border border-slate-200 px-1 py-2 text-center font-semibold dark:border-slate-700 ${getDayBgClass(
+                className={`min-w-[48px] border border-slate-200 px-1 py-2 text-center font-semibold dark:border-slate-700 ${getDayBgClass(
                   index
                 ) || "bg-slate-100 dark:bg-slate-800"} ${getDayTextClass(index)}`}
               >
@@ -453,7 +452,6 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
               row={row}
               rowIndex={rowIndex}
               dayInfo={dayInfo}
-              daysInMonth={daysInMonth}
               editable={editable}
               selectionBounds={selectionBounds}
               onCellSelect={handleCellSelect}
@@ -570,7 +568,6 @@ interface NurseRowProps {
   };
   rowIndex: number;
   dayInfo: { day: number; label: string; index: number }[];
-  daysInMonth: number;
   editable: boolean;
   selectionBounds: SelectionBounds | null;
   onCellSelect: (nurseId: string, day: number, shiftCode: string) => void;
@@ -581,15 +578,14 @@ const NurseRow = memo(function NurseRow({
   row,
   rowIndex,
   dayInfo,
-  daysInMonth,
   editable,
   selectionBounds,
   onCellSelect,
   onRemove,
 }: NurseRowProps) {
   const extraStats = useMemo(
-    () => computeExtraStats(row.entries, dayInfo, daysInMonth),
-    [row.entries, dayInfo, daysInMonth]
+    () => computeExtraStats(row.entries, dayInfo),
+    [row.entries, dayInfo]
   );
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">

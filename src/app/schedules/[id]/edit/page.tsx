@@ -8,6 +8,7 @@ import {
   SHIFT_COLORS,
   getDaysInMonth,
   getDayOfWeekIndex,
+  O_EQUIVALENT_CODES,
 } from "@/lib/utils";
 import { useReactToPrint } from "react-to-print";
 import Button from "@/components/ui/Button";
@@ -41,7 +42,10 @@ const SHIFT_CODES = [
   { code: "O", label: "공휴" },
   { code: "X", label: "휴무" },
   { code: "T", label: "교육" },
-  { code: "B", label: "보류" },
+  { code: "M", label: "공휴" },
+  { code: "CS2", label: "공휴" },
+  { code: "C6", label: "공휴" },
+  { code: "B", label: "공휴" },
 ];
 
 export default function ScheduleEditPage() {
@@ -168,7 +172,9 @@ export default function ScheduleEditPage() {
       for (const [, nurseData] of nurseMap) {
         const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
         Object.values(nurseData.entries).forEach((code) => {
-          if (code in counts) {
+          if (O_EQUIVALENT_CODES.has(code)) {
+            counts.O++;
+          } else if (code in counts) {
             counts[code as keyof typeof counts]++;
           }
         });
@@ -227,7 +233,9 @@ export default function ScheduleEditPage() {
 
           const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
           Object.values(entries).forEach((code) => {
-            if (code in counts) {
+            if (O_EQUIVALENT_CODES.has(code)) {
+              counts.O++;
+            } else if (code in counts) {
               counts[code as keyof typeof counts]++;
             }
           });
@@ -424,7 +432,9 @@ export default function ScheduleEditPage() {
 
     const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
     Object.values(entries).forEach((code) => {
-      if (code in counts) {
+      if (O_EQUIVALENT_CODES.has(code)) {
+        counts.O++;
+      } else if (code in counts) {
         counts[code as keyof typeof counts]++;
       }
     });

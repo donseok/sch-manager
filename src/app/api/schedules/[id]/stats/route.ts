@@ -54,7 +54,8 @@ export async function GET(
             nurseMap.get(key)!.entries[day] = entry.shiftTypeCode;
         }
 
-        const WORKING = new Set(["D", "E", "N", "T", "B"]);
+        const WORKING = new Set(["D", "E", "N", "T"]);
+        const O_EQUIV = new Set(["O", "M", "CS2", "C6", "B"]);
 
         const stats = Array.from(nurseMap.values()).map((nurse) => {
             let D = 0, E = 0, N = 0, T = 0, X = 0, O = 0;
@@ -68,13 +69,13 @@ export async function GET(
                 const dow = new Date(schedule.year, schedule.month - 1, day).getDay();
                 const isWorking = WORKING.has(code);
 
-                // Shift counts
-                if (code === "D") D++;
+                // Shift counts (M, CS2, C6, B count as O)
+                if (O_EQUIV.has(code)) O++;
+                else if (code === "D") D++;
                 else if (code === "E") E++;
                 else if (code === "N") N++;
                 else if (code === "T") T++;
                 else if (code === "X") X++;
-                else if (code === "O") O++;
 
                 // Weekend work
                 if (isWorking && (dow === 0 || dow === 6)) weekendWork++;

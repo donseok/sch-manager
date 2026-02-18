@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { SHIFT_COLORS } from "@/lib/utils";
 
-const SHIFT_OPTIONS = ["D", "E", "N", "O", "X", "T", "B"] as const;
+const SHIFT_OPTIONS = ["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "B"] as const;
 
 const SHIFT_LABELS: Record<string, string> = {
   D: "D (주간)",
@@ -12,7 +12,10 @@ const SHIFT_LABELS: Record<string, string> = {
   O: "O (공휴)",
   X: "X (휴무)",
   T: "T (교육)",
-  B: "B (보류)",
+  M: "M (공휴)",
+  CS2: "CS2 (공휴)",
+  C6: "C6 (공휴)",
+  B: "B (공휴)",
 };
 
 interface ShiftCellProps {
@@ -35,8 +38,11 @@ function ShiftCellInner({
   onSelect,
 }: ShiftCellProps) {
   const [showPopover, setShowPopover] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const cellRef = useRef<HTMLTableCellElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (
@@ -58,12 +64,70 @@ function ShiftCellInner({
     };
   }, [showPopover, handleClickOutside]);
 
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Cleanup click timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleCellClick = useCallback((e: React.MouseEvent) => {
     if (!editable) return;
-    // Shift+Click is used for range selection extension; don't open popover
     if (e.shiftKey) return;
-    setShowPopover((prev) => !prev);
+    if (isEditing) return;
+
+    // Delay single-click to distinguish from double-click
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      setShowPopover((prev) => !prev);
+      clickTimeoutRef.current = null;
+    }, 200);
+  }, [editable, isEditing]);
+
+  const handleDoubleClick = useCallback(() => {
+    if (!editable) return;
+
+    // Cancel pending single-click
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+
+    setShowPopover(false);
+    setIsEditing(true);
   }, [editable]);
+
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const val = (e.target as HTMLInputElement).value.trim().toUpperCase();
+      onSelect(nurseId, day, val);
+      setIsEditing(false);
+    }
+    if (e.key === "Escape") {
+      setIsEditing(false);
+    }
+  }, [nurseId, day, onSelect]);
+
+  const handleInputBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value.trim().toUpperCase();
+    if (val !== value) {
+      onSelect(nurseId, day, val);
+    }
+    setIsEditing(false);
+  }, [nurseId, day, value, onSelect]);
 
   const handleOptionSelect = useCallback(
     (shiftCode: string) => {
@@ -84,19 +148,30 @@ function ShiftCellInner({
         editable ? "cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-inset" : ""
       } ${isSelected ? "ring-2 ring-blue-500 ring-inset" : ""}`}
       onClick={handleCellClick}
+      onDoubleClick={handleDoubleClick}
     >
-      <div
-        className={`flex h-8 w-10 items-center justify-center text-sm font-semibold ${colorClass}`}
-      >
-        {value || ""}
-      </div>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          className="h-8 w-full border-2 border-blue-400 text-center text-sm font-semibold outline-none"
+          defaultValue={value}
+          onKeyDown={handleInputKeyDown}
+          onBlur={handleInputBlur}
+        />
+      ) : (
+        <div
+          className={`flex h-8 w-12 items-center justify-center text-xs font-semibold ${colorClass}`}
+        >
+          {value || ""}
+        </div>
+      )}
 
       {/* Shift type selector popover */}
-      {showPopover && (
+      {showPopover && !isEditing && (
         <div
           ref={popoverRef}
           className="absolute left-1/2 top-full z-50 mt-1 -translate-x-1/2 rounded-lg border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-600 dark:bg-slate-800"
-          style={{ minWidth: "120px" }}
+          style={{ minWidth: "140px" }}
         >
           {SHIFT_OPTIONS.map((code) => (
             <button
@@ -110,7 +185,7 @@ function ShiftCellInner({
               }`}
             >
               <span
-                className={`inline-flex h-5 w-5 items-center justify-center rounded text-[11px] font-bold ${
+                className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded px-0.5 text-[11px] font-bold ${
                   SHIFT_COLORS[code] || ""
                 }`}
               >
