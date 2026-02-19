@@ -130,7 +130,7 @@ The central UI component. An interactive table with:
 - Mouse drag selection + Shift+Click extend
 - Ctrl+C/V copy/paste via hidden textarea pattern (Google Sheets approach, tab-separated format, supports Excel/Notepad external paste)
 - Per-nurse summary columns (D/E/N/T/X/O/XO) + extra stats (주말/연속/시간)
-- Daily shift count footer rows (D/E/N/T/X, T+X, 일별 총인원)
+- Daily shift count footer rows (D/E/N/T/X, T+X, 일별 총인원 = D+E+N+T+X)
 - `NurseRow` is `memo()`-wrapped for performance
 
 ### Zustand Store (`src/store/schedule.ts`)
