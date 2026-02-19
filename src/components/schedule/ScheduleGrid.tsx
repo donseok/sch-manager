@@ -347,17 +347,13 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
       txTotal += txCounts[day];
     }
 
-    // Total working personnel per day (D + E + N only)
-    const WORKING_SHIFT_CODES = new Set(["D", "E", "N"]);
+    // Total personnel per day (D + E + N + T + X)
     const dailyTotal: Record<number, number> = {};
     let grandTotal = 0;
     for (const day of days) {
       dailyTotal[day] = 0;
-      for (const row of gridData) {
-        const shift = row.entries[day];
-        if (shift && WORKING_SHIFT_CODES.has(shift)) {
-          dailyTotal[day]++;
-        }
+      for (const type of DAILY_SHIFT_TYPES) {
+        dailyTotal[day] += counts[type][day];
       }
       grandTotal += dailyTotal[day];
     }
