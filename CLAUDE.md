@@ -16,7 +16,7 @@ npx tsc --noEmit     # Type check
 
 ## Architecture
 
-**Next.js 14 App Router** + **Prisma (PostgreSQL)** + **Zustand** + **Tailwind CSS**
+**Next.js 14 App Router** + **Prisma (SQLite local / PostgreSQL production)** + **Zustand** + **Tailwind CSS**
 
 This is a hospital nurse scheduling management system (42병동 간호사 근무표 관리). All UI text is in Korean.
 
@@ -27,7 +27,7 @@ This is a hospital nurse scheduling management system (42병동 간호사 근무
 | Framework | Next.js (App Router) | 14.2.x |
 | Language | TypeScript | 5.x |
 | ORM | Prisma Client | 5.22.x |
-| Database | PostgreSQL (Neon, Vercel Postgres) | - |
+| Database | SQLite (local) / PostgreSQL (Neon, production) | - |
 | State | Zustand | 5.x |
 | Styling | Tailwind CSS | 3.4.x |
 | Icons | Lucide React | 0.564.x |
@@ -42,7 +42,7 @@ This is a hospital nurse scheduling management system (42병동 간호사 근무
 ### Data Flow
 
 ```
-Browser → Next.js API Routes (src/app/api/) → Prisma → PostgreSQL
+Browser → Next.js API Routes (src/app/api/) → Prisma → SQLite (local) / PostgreSQL (prod)
                                                 ↕
 Browser ← React Components ← Zustand Store (schedule grid state)
 ```
@@ -128,7 +128,7 @@ The central UI component. An interactive table with:
 - Sticky left columns (사원번호, 사원명, 직위) — fixed during horizontal scroll (`sticky left-[N] z-10/z-40`)
 - Max height container (`max-h-[calc(100vh-280px)] overflow-auto`) for both scroll axes
 - Mouse drag selection + Shift+Click extend
-- Ctrl+C/V copy/paste (tab-separated format)
+- Ctrl+C/V copy/paste via hidden textarea pattern (Google Sheets approach, tab-separated format, supports Excel/Notepad external paste)
 - Per-nurse summary columns (D/E/N/T/X/O/XO) + extra stats (주말/연속/시간)
 - Daily shift count footer rows (D/E/N/T/X, T+X, 일별 총인원)
 - `NurseRow` is `memo()`-wrapped for performance
@@ -180,5 +180,6 @@ Nurses are sorted by `sortOrder` (not employeeNumber). This preserves the user-d
 ## Deployment
 
 - Platform: Vercel
-- Database: Vercel Postgres (Neon) — uses `DATABASE_URL` and `DATABASE_URL_UNPOOLED`
+- Database (local): SQLite — `DATABASE_URL="file:./dev.db"` in `.env`
+- Database (production): Vercel Postgres (Neon) — switch provider to `postgresql` in `prisma/schema.prisma` and set `DATABASE_URL` / `DATABASE_URL_UNPOOLED`
 - Build: `prisma generate && prisma db push && next build`

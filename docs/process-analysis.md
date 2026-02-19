@@ -203,9 +203,10 @@
          ├─→ (c) Shift + 클릭
          │      시작 셀 클릭 → Shift + 끝 셀 → 범위 확장
          │
-         └─→ (d) Ctrl+C / Ctrl+V
-                복사: 선택 범위 → 탭 구분 텍스트 → 클립보드
-                붙여넣기: 클립보드 → 파싱 → 유효한 근무코드만 적용
+         └─→ (d) Ctrl+C / Ctrl+V (Hidden Textarea 패턴, Google Sheets 방식)
+                복사: 선택 범위 → hidden textarea에 탭 구분 텍스트 → Ctrl+C로 클립보드
+                붙여넣기: Ctrl+V → hidden textarea의 paste 이벤트 → 파싱 → 유효한 근무코드만 적용
+                외부 붙여넣기: 엑셀/메모장에서 복사한 탭 구분 데이터도 그리드에 직접 붙여넣기 가능
          │
          ▼
        Zustand Store 업데이트
@@ -251,7 +252,7 @@
 | 이전 월 참조 | scheduleId | GET `/api/schedules/[id]/previous` | 전월 집계 데이터 |
 
 #### 비즈니스 규칙
-- 유효한 근무코드: D, E, N, O, X, T, B (빈 값도 허용)
+- 유효한 근무코드: D, E, N, O, X, T, M, CS2, C6, C, B (빈 값도 허용)
 - 확정(CONFIRMED) 상태에서는 편집 불가 (editable=false)
 - 셀 편집 시 집계 자동 재계산: D, E, N, T, X, O 카운트 + XO = X+O
 - 추가 통계: 주말근무 횟수, 최대연속근무일, 총근무시간 (8시간/근무)
@@ -693,4 +694,4 @@ DRAFT → PENDING_MANAGER → PENDING_DIRECTOR → APPROVED → CONFIRMED
 
 ---
 
-*본 문서는 실제 구현된 시스템 코드를 기반으로 작성되었습니다. (2026-02-18)*
+*본 문서는 실제 구현된 시스템 코드를 기반으로 작성되었습니다. (2026-02-19)*

@@ -7,7 +7,6 @@ import { useScheduleStore } from "@/store/schedule";
 import {
   SHIFT_COLORS,
   getDaysInMonth,
-  getDayOfWeekIndex,
   O_EQUIVALENT_CODES,
 } from "@/lib/utils";
 import { useReactToPrint } from "react-to-print";
@@ -217,41 +216,16 @@ export default function ScheduleEditPage() {
         nursesRes.ok ? await nursesRes.json() : [];
 
       if (data.entries.length === 0) {
-        // No entries yet: auto-fill defaults for leaders
-        const daysInMonth = getDaysInMonth(data.year, data.month);
-
-        const defaultGrid: ScheduleGridData[] = wardNurseList.map((nurse) => {
-          const entries: Record<number, string> = {};
-          const isLeader = nurse.position === "HN" || nurse.position === "CN";
-
-          if (isLeader) {
-            for (let day = 1; day <= daysInMonth; day++) {
-              const dow = getDayOfWeekIndex(data.year, data.month, day);
-              const isWeekend = dow === 0 || dow === 6;
-              entries[day] = isWeekend ? "O" : "D";
-            }
-          }
-
-          const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
-          Object.values(entries).forEach((code) => {
-            if (O_EQUIVALENT_CODES.has(code)) {
-              counts.O++;
-            } else if (code in counts) {
-              counts[code as keyof typeof counts]++;
-            }
-          });
-          counts.XO = counts.X + counts.O;
-
-          return {
-            nurseId: nurse.id,
-            nurseName: nurse.name,
-            employeeNumber: nurse.employeeNumber,
-            position: nurse.position,
-            sortOrder: nurse.sortOrder,
-            entries,
-            summary: counts,
-          };
-        });
+        // No entries yet: all nurses start with empty entries
+        const defaultGrid: ScheduleGridData[] = wardNurseList.map((nurse) => ({
+          nurseId: nurse.id,
+          nurseName: nurse.name,
+          employeeNumber: nurse.employeeNumber,
+          position: nurse.position,
+          sortOrder: nurse.sortOrder,
+          entries: {},
+          summary: { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 },
+        }));
         setGridData(defaultGrid);
         setDirty(true);
       } else {
@@ -415,40 +389,14 @@ export default function ScheduleEditPage() {
     const nurse = wardNurses.find((n) => n.id === selectedNurseId);
     if (!nurse) return;
 
-    const daysInMonth = getDaysInMonth(schedule.year, schedule.month);
-    const isLeader = nurse.position === "HN" || nurse.position === "CN";
-    const entries: Record<number, string> = {};
-
-    if (isLeader) {
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dow = getDayOfWeekIndex(schedule.year, schedule.month, day);
-        const isWeekend = dow === 0 || dow === 6;
-        if (isWeekend) {
-          entries[day] = "O";
-        } else {
-          entries[day] = "D";
-        }
-      }
-    }
-
-    const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
-    Object.values(entries).forEach((code) => {
-      if (O_EQUIVALENT_CODES.has(code)) {
-        counts.O++;
-      } else if (code in counts) {
-        counts[code as keyof typeof counts]++;
-      }
-    });
-    counts.XO = counts.X + counts.O;
-
     addNurseToGrid({
       nurseId: nurse.id,
       nurseName: nurse.name,
       employeeNumber: nurse.employeeNumber,
       position: nurse.position,
       sortOrder: nurse.sortOrder ?? 0,
-      entries,
-      summary: counts,
+      entries: {},
+      summary: { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 },
     });
 
     setShowAddNurseModal(false);
