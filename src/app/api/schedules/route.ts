@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -48,14 +49,7 @@ export async function POST(request: NextRequest) {
 
     const version = existing ? existing.version + 1 : 1;
 
-    // Use the first available user as default creator
-    const defaultUser = await prisma.user.findFirst();
-    if (!defaultUser) {
-      return NextResponse.json(
-        { error: "No user found in system" },
-        { status: 500 }
-      );
-    }
+    const currentUser = await requireCurrentUser();
 
     const schedule = await prisma.schedule.create({
       data: {
@@ -64,7 +58,7 @@ export async function POST(request: NextRequest) {
         month,
         version,
         status: "DRAFT",
-        createdById: defaultUser.id,
+        createdById: currentUser.id,
       },
       include: {
         ward: true,

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -66,11 +67,12 @@ async function main() {
   }
   console.log("간호사 시드 완료");
 
-  // 4. 시스템 사용자 계정 생성 (인증 없이 기본 사용자로 사용)
-  const passwordHash = "unused";
+  // 4. 시스템 사용자 계정 생성 (bcrypt 해싱)
+  const defaultPasswordHash = await bcrypt.hash("1234", 10);
 
   const users = [
     { loginId: "headnurse", name: "진인숙", role: "HEAD_NURSE", nurseId: nurses[0].id, wardId: ward42.id },
+    { loginId: "chargenurse", name: "김경선", role: "HEAD_NURSE", nurseId: nurses[1].id, wardId: ward42.id },
     { loginId: "manager", name: "이정숙", role: "NURSING_MANAGER", nurseId: null, wardId: null },
     { loginId: "director", name: "박영희", role: "NURSING_DIRECTOR", nurseId: null, wardId: null },
     { loginId: "admin", name: "시스템관리자", role: "ADMIN", nurseId: null, wardId: null },
@@ -79,8 +81,8 @@ async function main() {
   for (const u of users) {
     await prisma.user.upsert({
       where: { loginId: u.loginId },
-      update: {},
-      create: { ...u, passwordHash },
+      update: { passwordHash: defaultPasswordHash, name: u.name, role: u.role },
+      create: { ...u, passwordHash: defaultPasswordHash },
     });
   }
   console.log("사용자 계정 시드 완료");
