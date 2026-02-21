@@ -37,14 +37,15 @@ This is a hospital nurse scheduling management system (42병동 간호사 근무
 | Date | date-fns | 4.x |
 | Theme | next-themes | 0.4.x |
 | Table | @tanstack/react-table | 8.x (installed, not yet used in grid) |
+| Auth | bcryptjs + jose (JWT) | 3.x / 6.x |
 | Utility | clsx | 2.x |
 
 ### Data Flow
 
 ```
-Browser → Next.js API Routes (src/app/api/) → Prisma → SQLite (local) / PostgreSQL (prod)
-                                                ↕
-Browser ← React Components ← Zustand Store (schedule grid state)
+Browser → Middleware (JWT verify) → Next.js API Routes (src/app/api/) → Prisma → SQLite (local) / PostgreSQL (prod)
+                                                                          ↕
+Browser ← React Components ← Zustand Store (schedule grid state) + AuthContext (user session)
 ```
 
 ### Core Domain Model (Prisma, 10 models)
@@ -89,6 +90,10 @@ Ward ──1:N──→ Nurse ──1:N──→ ScheduleEntry
 src/
 ├── app/
 │   ├── api/                    # API Routes
+│   │   ├── auth/               # Authentication
+│   │   │   ├── login/          # POST: login (bcrypt verify → JWT cookie)
+│   │   │   ├── logout/         # POST: clear auth cookie
+│   │   │   └── me/             # GET: current user from JWT
 │   │   ├── dashboard/          # GET: dashboard stats
 │   │   ├── nurses/             # GET/POST, [id] GET/PUT/DELETE
 │   │   ├── schedules/          # GET/POST, [id] GET/PATCH/DELETE
@@ -102,6 +107,7 @@ src/
 │   │   ├── seed/               # POST: seed database
 │   │   ├── shift-types/        # GET/POST, [id] route
 │   │   └── wards/              # GET/POST, [id] PUT/DELETE
+│   ├── login/                  # Client component — login page (public, no sidebar)
 │   ├── dashboard/              # Server component — today's shifts, week preview, alerts
 │   ├── nurses/                 # Client component — nurse CRUD
 │   └── schedules/              # Client component — schedule list
@@ -110,10 +116,12 @@ src/
 │   ├── layout/                 # Sidebar, Header, MainContent, Providers
 │   ├── schedule/               # ScheduleGrid, ShiftCell, ChangeHistory, PrintLayout
 │   └── ui/                     # Button, Badge, Modal, NurseFormModal, ThemeToggle
-├── contexts/                   # SidebarContext (collapsed state, localStorage)
+├── contexts/                   # SidebarContext, AuthContext
 ├── lib/
+│   ├── auth.ts                 # JWT auth helpers (hash, verify, token create/verify, getCurrentUser)
 │   ├── prisma.ts               # Singleton PrismaClient
 │   └── utils.ts                # Date helpers, SHIFT_COLORS, STATUS/ROLE/POSITION labels, cn()
+├── middleware.ts                # Next.js middleware — JWT auth guard (redirects to /login)
 ├── store/
 │   └── schedule.ts             # Zustand store for grid state
 └── types/
@@ -121,6 +129,15 @@ src/
 ```
 
 ## Key Patterns
+
+### Authentication (JWT + Cookie)
+- **Login flow**: POST `/api/auth/login` → bcrypt verify → JWT (HS256, 7-day expiry) → `auth-token` httpOnly cookie
+- **Middleware** (`src/middleware.ts`): Intercepts all routes except `/login` and `/api/auth/*`. Unauthenticated requests → redirect to `/login` (pages) or 401 (API).
+- **AuthContext** (`src/contexts/AuthContext.tsx`): Client-side React context wrapping the app in `Providers`. Fetches `/api/auth/me` on mount, provides `user`, `loading`, `logout()`.
+- **Header**: Shows logged-in user name + role badge + logout button.
+- **`requireCurrentUser()`** (`src/lib/auth.ts`): Server-side helper used in API routes (schedules POST/PATCH, entries PUT, print POST) to get the current user from JWT. Falls back to first DB user for backward compatibility.
+- **Seed accounts** (all password `1234`): `headnurse` (진인숙, HEAD_NURSE), `chargenurse` (김경선, HEAD_NURSE), `manager` (이정숙, NURSING_MANAGER), `director` (박영희, NURSING_DIRECTOR), `admin` (시스템관리자, ADMIN)
+- **Environment variable**: `JWT_SECRET` (defaults to `fallback-secret-change-me`)
 
 ### Schedule Grid (`src/components/schedule/ScheduleGrid.tsx`)
 The central UI component. An interactive table with:
@@ -172,6 +189,8 @@ Nurses are sorted by `sortOrder` (not employeeNumber). This preserves the user-d
 - Collapsible sidebar (`SidebarContext` with localStorage persistence)
 - Dark mode support (`next-themes`, class strategy)
 - Responsive: sidebar collapses on mobile
+- Provider hierarchy: `ThemeProvider` → `AuthProvider` → `SidebarProvider`
+- Login page renders outside the sidebar/header layout
 
 ## Path Alias
 
@@ -182,4 +201,5 @@ Nurses are sorted by `sortOrder` (not employeeNumber). This preserves the user-d
 - Platform: Vercel
 - Database (local): SQLite — `DATABASE_URL="file:./dev.db"` in `.env`
 - Database (production): Vercel Postgres (Neon) — switch provider to `postgresql` in `prisma/schema.prisma` and set `DATABASE_URL` / `DATABASE_URL_UNPOOLED`
+- Environment variables: `DATABASE_URL`, `JWT_SECRET`
 - Build: `prisma generate && prisma db push && next build`
