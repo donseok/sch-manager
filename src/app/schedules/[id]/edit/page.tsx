@@ -30,9 +30,14 @@ import {
   RotateCcw,
   Lock,
   Unlock,
+  Wand2,
+  CalendarDays,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import { STATUS_LABELS, STATUS_COLORS } from "@/lib/utils";
+import VacationEditor from "@/components/schedule/VacationEditor";
+import GenerateScheduleModal from "@/components/schedule/GenerateScheduleModal";
+import type { ScheduleGenerationResult } from "@/types/scheduling";
 
 const SHIFT_CODES = [
   { code: "D", label: "주간" },
@@ -105,6 +110,10 @@ export default function ScheduleEditPage() {
   >([]);
   const [selectedNurseId, setSelectedNurseId] = useState("");
   const [removeTarget, setRemoveTarget] = useState<{ nurseId: string; nurseName: string } | null>(null);
+
+  // AI Generate & Preferences
+  const [showVacationEditor, setShowVacationEditor] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   // Zustand store
   const gridData = useScheduleStore((state) => state.gridData);
@@ -522,6 +531,27 @@ export default function ScheduleEditPage() {
     setShowResetModal(false);
   }, [gridData, setGridData, setDirty]);
 
+  // Apply AI-generated schedule to grid
+  const handleApplyGenerated = useCallback(
+    (result: ScheduleGenerationResult) => {
+      const updates: { nurseId: string; day: number; shiftCode: string }[] = [];
+      for (const [nurseId, days] of Object.entries(result.grid)) {
+        for (const [dayStr, shiftCode] of Object.entries(days)) {
+          if (shiftCode) {
+            updates.push({
+              nurseId,
+              day: Number(dayStr),
+              shiftCode: shiftCode as string,
+            });
+          }
+        }
+      }
+      const updateCells = useScheduleStore.getState().updateCells;
+      updateCells(updates);
+    },
+    []
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -693,6 +723,30 @@ export default function ScheduleEditPage() {
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
             이전 월 참조
+          </Button>
+
+          <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700" />
+
+          {/* Preference editor button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowVacationEditor(true)}
+            disabled={isConfirmed}
+          >
+            <CalendarDays className="mr-1 h-4 w-4" />
+            휴가 희망일
+          </Button>
+
+          {/* AI Generate button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowGenerateModal(true)}
+            disabled={isConfirmed}
+          >
+            <Wand2 className="mr-1 h-4 w-4" />
+            AI 생성
           </Button>
 
           <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700" />
@@ -1055,6 +1109,26 @@ export default function ScheduleEditPage() {
           </p>
         </div>
       </Modal>
+
+      {/* Vacation Editor Modal */}
+      <VacationEditor
+        isOpen={showVacationEditor}
+        onClose={() => setShowVacationEditor(false)}
+        scheduleId={scheduleId}
+        year={schedule.year}
+        month={schedule.month}
+        gridData={gridData}
+      />
+
+      {/* AI Generate Modal */}
+      <GenerateScheduleModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        scheduleId={scheduleId}
+        year={schedule.year}
+        month={schedule.month}
+        onApply={handleApplyGenerated}
+      />
 
       {/* Print Layout (hidden from screen, visible in print) */}
       <PrintLayout

@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // 병동 정보
@@ -44,6 +43,7 @@ model Nurse {
   scheduleSummaries ScheduleSummary[]
   changeLogs        ScheduleChangeLog[]
   user              User?
+  preferences       NursePreference[]
 
   @@map("nurses")
 }
@@ -208,4 +208,23 @@ model SchedulePrintLog {
   printedBy User     @relation(fields: [printedById], references: [id])
 
   @@map("schedule_print_logs")
+}
+
+// 간호사 희망 근무
+model NursePreference {
+  id        String   @id @default(uuid())
+  nurseId   String   @map("nurse_id")
+  year      Int
+  month     Int
+  day       Int
+  shiftCode String   @map("shift_code")
+  priority  String   @default("PREFER")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  nurse Nurse @relation(fields: [nurseId], references: [id])
+
+  @@unique([nurseId, year, month, day])
+  @@map("nurse_preferences")
 }

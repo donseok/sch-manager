@@ -8,6 +8,7 @@ import type {
   ScheduleSummary,
   ScheduleChangeLog,
   SchedulePrintLog,
+  NursePreference,
 } from "@prisma/client";
 
 export type {
@@ -20,7 +21,10 @@ export type {
   ScheduleSummary,
   ScheduleChangeLog,
   SchedulePrintLog,
+  NursePreference,
 };
+
+export type * from "./scheduling";
 
 export type ScheduleEntryWithNurse = ScheduleEntry & {
   nurse: Nurse;

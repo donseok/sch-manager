@@ -9,7 +9,15 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  size?: "default" | "lg" | "xl" | "full";
 }
+
+const SIZE_CLASSES: Record<string, string> = {
+  default: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-6xl",
+  full: "max-w-[95vw]",
+};
 
 export default function Modal({
   isOpen,
@@ -17,6 +25,7 @@ export default function Modal({
   title,
   children,
   footer,
+  size = "default",
 }: ModalProps) {
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -49,7 +58,7 @@ export default function Modal({
       />
 
       {/* Modal content */}
-      <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-xl mx-4 dark:bg-slate-800">
+      <div className={`relative z-10 w-full ${SIZE_CLASSES[size]} rounded-xl bg-white shadow-xl mx-4 dark:bg-slate-800`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
