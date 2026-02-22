@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
@@ -50,9 +51,8 @@ export async function PUT(
       );
     }
 
-    // Use the first available user as default
-    const defaultUser = await prisma.user.findFirst();
-    const userId = defaultUser?.id || "system";
+    const currentUser = await requireCurrentUser();
+    const userId = currentUser.id;
 
     // Build a set of (nurseId, workDate) from incoming entries
     const incomingKeys = new Set<string>();

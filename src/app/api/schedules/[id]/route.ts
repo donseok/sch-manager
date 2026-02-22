@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
@@ -52,8 +53,8 @@ export async function PATCH(
       return NextResponse.json({ error: "근무표를 찾을 수 없습니다." }, { status: 404 });
     }
 
-    const defaultUser = await prisma.user.findFirst();
-    const userId = defaultUser?.id || "system";
+    const currentUser = await requireCurrentUser();
+    const userId = currentUser.id;
 
     if (action === "confirm") {
       if (schedule.status === "CONFIRMED") {

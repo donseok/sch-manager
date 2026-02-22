@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
@@ -27,19 +28,12 @@ export async function POST(
       );
     }
 
-    // Use the first available user as default
-    const defaultUser = await prisma.user.findFirst();
-    if (!defaultUser) {
-      return NextResponse.json(
-        { error: "No user found in system" },
-        { status: 500 }
-      );
-    }
+    const currentUser = await requireCurrentUser();
 
     const printLog = await prisma.schedulePrintLog.create({
       data: {
         scheduleId: params.id,
-        printedById: defaultUser.id,
+        printedById: currentUser.id,
         printFormat,
       },
     });

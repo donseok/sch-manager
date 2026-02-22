@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ScheduleGridData } from "@/types";
+import { O_EQUIVALENT_CODES } from "@/lib/utils";
 
 interface CellUpdate {
   nurseId: string;
@@ -68,7 +69,9 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
         // Recalculate summary inline
         const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
         Object.values(newEntries).forEach((c) => {
-          if (c in counts) {
+          if (O_EQUIVALENT_CODES.has(c)) {
+            counts.O++;
+          } else if (c in counts) {
             counts[c as keyof typeof counts]++;
           }
         });
@@ -89,7 +92,9 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
         if (row.nurseId !== nurseId) return row;
         const counts = { D: 0, E: 0, N: 0, T: 0, X: 0, O: 0, XO: 0 };
         Object.values(row.entries).forEach((code) => {
-          if (code in counts) {
+          if (O_EQUIVALENT_CODES.has(code)) {
+            counts.O++;
+          } else if (code in counts) {
             counts[code as keyof typeof counts]++;
           }
         });

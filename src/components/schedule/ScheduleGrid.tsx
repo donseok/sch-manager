@@ -32,7 +32,7 @@ const SUMMARY_LABELS: Record<string, string> = {
 
 const DAILY_SHIFT_TYPES = ["D", "E", "N", "T", "X"] as const;
 
-const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "B", ""]);
+const VALID_SHIFT_CODES = new Set(["D", "E", "N", "O", "X", "T", "M", "CS2", "C6", "C", "B", ""]);
 
 // Extra derived stat columns shown after the main summary
 const EXTRA_STAT_KEYS = ["WE", "CON", "HRS"] as const;
@@ -42,13 +42,12 @@ const EXTRA_STAT_LABELS: Record<string, string> = {
   HRS: "시간",
 };
 
-const WORKING_CODES = new Set(["D", "E", "N", "T", "B"]);
+const WORKING_CODES = new Set(["D", "E", "N", "T"]);
 const HOURS_PER_SHIFT = 8;
 
 function computeExtraStats(
   entries: Record<number, string>,
-  dayInfo: { day: number; index: number }[],
-  daysInMonth: number
+  dayInfo: { day: number; index: number }[]
 ): { WE: number; CON: number; HRS: number } {
   let weekendWork = 0;
   let maxConsecutive = 0;
@@ -99,6 +98,8 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
   const updateCells = useScheduleStore((state) => state.updateCells);
 
   const tableRef = useRef<HTMLTableElement>(null);
+  // Hidden textarea that acts as clipboard bridge (same pattern as Google Sheets)
+  const clipboardRef = useRef<HTMLTextAreaElement>(null);
 
   // Selection state
   const [selectionAnchor, setSelectionAnchor] = useState<SelectionPoint | null>(null);
@@ -150,27 +151,64 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
     return { row, day };
   }, []);
 
-  // Mouse down on table: start selection
+  // Build tab-separated copy text from current selection
+  const buildCopyText = useCallback(() => {
+    if (!selectionBounds) return "";
+    const { minRow, maxRow, minDay, maxDay } = selectionBounds;
+    const rows: string[] = [];
+    for (let r = minRow; r <= maxRow; r++) {
+      const rowData = gridData[r];
+      if (!rowData) continue;
+      const cols: string[] = [];
+      for (let d = minDay; d <= maxDay; d++) {
+        cols.push(rowData.entries[d] || "");
+      }
+      rows.push(cols.join("\t"));
+    }
+    return rows.join("\n");
+  }, [selectionBounds, gridData]);
+
+  // Keep the hidden textarea content in sync with the selection for native Ctrl+C
+  useEffect(() => {
+    if (!clipboardRef.current) return;
+    if (selectionBounds) {
+      clipboardRef.current.value = buildCopyText();
+      clipboardRef.current.select();
+    }
+  }, [selectionBounds, buildCopyText]);
+
+  // Focus hidden textarea so it can receive keyboard/paste events
+  const focusClipboard = useCallback(() => {
+    if (clipboardRef.current) {
+      clipboardRef.current.focus();
+      if (clipboardRef.current.value) {
+        clipboardRef.current.select();
+      }
+    }
+  }, []);
+
+  // Mouse down on table: start selection + focus clipboard textarea
   const handleTableMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!editable) return;
-      // Only left mouse button
       if (e.button !== 0) return;
 
       const coords = getCellCoords(e.target as HTMLElement);
       if (!coords) return;
 
+      // Focus the hidden textarea for clipboard operations
+      // Use setTimeout to not interfere with the current mousedown
+      setTimeout(() => focusClipboard(), 0);
+
       if (e.shiftKey && selectionAnchor) {
-        // Extend selection
         setSelectionEnd(coords);
       } else {
-        // Start new selection
         setSelectionAnchor(coords);
         setSelectionEnd(coords);
         setIsDragging(true);
       }
     },
-    [editable, getCellCoords, selectionAnchor]
+    [editable, getCellCoords, selectionAnchor, focusClipboard]
   );
 
   // Mouse over during drag: extend selection
@@ -184,10 +222,19 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
     [isDragging, getCellCoords]
   );
 
-  // Global mouseup: end drag
+  // Global mouseup: end drag, then re-focus clipboard textarea
   useEffect(() => {
     if (!isDragging) return;
-    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      // Re-focus after drag ends so Ctrl+C/V work immediately
+      setTimeout(() => {
+        if (clipboardRef.current) {
+          clipboardRef.current.focus();
+          if (clipboardRef.current.value) clipboardRef.current.select();
+        }
+      }, 0);
+    };
     document.addEventListener("mouseup", handleMouseUp);
     return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [isDragging]);
@@ -195,7 +242,10 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
   // Clear selection when clicking outside the table
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (tableRef.current && !tableRef.current.contains(e.target as Node)) {
+      if (
+        tableRef.current && !tableRef.current.contains(e.target as Node) &&
+        clipboardRef.current && e.target !== clipboardRef.current
+      ) {
         setSelectionAnchor(null);
         setSelectionEnd(null);
       }
@@ -204,81 +254,67 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Keyboard handlers: Ctrl+C / Ctrl+V
-  useEffect(() => {
-    if (!editable) return;
+  // Handle paste on hidden textarea — works for both grid copy and external paste (Excel, Notepad)
+  const handleClipboardPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!editable) return;
+      e.preventDefault();
+      const text = e.clipboardData.getData("text/plain");
+      if (!text) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if an input/textarea/select is focused
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const anchor = selectionAnchor || { row: 0, day: 1 };
+      const pasteRows = text.split(/\r?\n/).filter((line) => line.length > 0);
+      const updates: { nurseId: string; day: number; shiftCode: string }[] = [];
 
-      const isCtrl = e.ctrlKey || e.metaKey;
+      for (let r = 0; r < pasteRows.length; r++) {
+        const rowIndex = anchor.row + r;
+        if (rowIndex >= gridData.length) break;
+        const rowData = gridData[rowIndex];
+        const values = pasteRows[r].split("\t");
 
-      // Ctrl+C: Copy
-      if (isCtrl && e.key === "c" && selectionBounds) {
-        e.preventDefault();
-        const { minRow, maxRow, minDay, maxDay } = selectionBounds;
-        const rows: string[] = [];
-        for (let r = minRow; r <= maxRow; r++) {
-          const rowData = gridData[r];
-          if (!rowData) continue;
-          const cols: string[] = [];
-          for (let d = minDay; d <= maxDay; d++) {
-            cols.push(rowData.entries[d] || "");
+        for (let c = 0; c < values.length; c++) {
+          const day = anchor.day + c;
+          if (day > daysInMonth || day < 1) break;
+          const val = values[c].trim().toUpperCase();
+          if (VALID_SHIFT_CODES.has(val)) {
+            updates.push({ nurseId: rowData.nurseId, day, shiftCode: val });
           }
-          rows.push(cols.join("\t"));
         }
-        const text = rows.join("\n");
-        navigator.clipboard.writeText(text);
       }
 
-      // Ctrl+V: Paste
-      if (isCtrl && e.key === "v" && selectionAnchor) {
-        e.preventDefault();
-        navigator.clipboard.readText().then((text) => {
-          if (!text) return;
-          const pasteRows = text.split(/\r?\n/).filter((line) => line.length > 0 || text.split(/\r?\n/).length === 1);
-          const updates: { nurseId: string; day: number; shiftCode: string }[] = [];
-
-          for (let r = 0; r < pasteRows.length; r++) {
-            const rowIndex = selectionAnchor.row + r;
-            if (rowIndex >= gridData.length) break;
-            const rowData = gridData[rowIndex];
-            const values = pasteRows[r].split("\t");
-
-            for (let c = 0; c < values.length; c++) {
-              const day = selectionAnchor.day + c;
-              if (day > daysInMonth) break;
-              const val = values[c].trim().toUpperCase();
-              if (VALID_SHIFT_CODES.has(val)) {
-                updates.push({
-                  nurseId: rowData.nurseId,
-                  day,
-                  shiftCode: val,
-                });
-              }
-            }
-          }
-
-          if (updates.length > 0) {
-            updateCells(updates);
-            // Update selection to cover pasted area
-            setSelectionEnd({
-              row: Math.min(selectionAnchor.row + pasteRows.length - 1, gridData.length - 1),
-              day: Math.min(
-                selectionAnchor.day + Math.max(...pasteRows.map((r) => r.split("\t").length)) - 1,
-                daysInMonth
-              ),
-            });
-          }
+      if (updates.length > 0) {
+        updateCells(updates);
+        setSelectionAnchor(anchor);
+        setSelectionEnd({
+          row: Math.min(anchor.row + pasteRows.length - 1, gridData.length - 1),
+          day: Math.min(
+            anchor.day + Math.max(...pasteRows.map((r) => r.split("\t").length)) - 1,
+            daysInMonth
+          ),
         });
       }
-    };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editable, selectionBounds, selectionAnchor, gridData, daysInMonth, updateCells]);
+      // Re-select content for subsequent copy operations
+      setTimeout(() => {
+        if (clipboardRef.current) {
+          clipboardRef.current.value = buildCopyText();
+          clipboardRef.current.select();
+        }
+      }, 0);
+    },
+    [editable, selectionAnchor, gridData, daysInMonth, updateCells, buildCopyText]
+  );
+
+  // Handle copy on hidden textarea — update content right before browser copies
+  const handleClipboardCopy = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!selectionBounds) return;
+      e.preventDefault();
+      const text = buildCopyText();
+      e.clipboardData.setData("text/plain", text);
+    },
+    [selectionBounds, buildCopyText]
+  );
 
   // Daily shift summary calculation
   const dailySummary = useMemo(() => {
@@ -311,16 +347,13 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
       txTotal += txCounts[day];
     }
 
-    // Total personnel per day (all nurses with any entry)
+    // Total personnel per day (D + E + N + T + X)
     const dailyTotal: Record<number, number> = {};
     let grandTotal = 0;
     for (const day of days) {
       dailyTotal[day] = 0;
-      for (const row of gridData) {
-        const shift = row.entries[day];
-        if (shift) {
-          dailyTotal[day]++;
-        }
+      for (const type of DAILY_SHIFT_TYPES) {
+        dailyTotal[day] += counts[type][day];
       }
       grandTotal += dailyTotal[day];
     }
@@ -354,31 +387,49 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
   }
 
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-lg dark:border-slate-700">
+    <div className="relative overflow-auto max-h-[calc(100vh-280px)] border border-slate-200 rounded-lg dark:border-slate-700">
+      {/* Hidden textarea for clipboard copy/paste (Google Sheets pattern) */}
+      <textarea
+        ref={clipboardRef}
+        className="absolute left-[-9999px] w-0 h-0 opacity-0"
+        tabIndex={-1}
+        aria-hidden="true"
+        onPaste={handleClipboardPaste}
+        onCopy={handleClipboardCopy}
+      />
       <table
         ref={tableRef}
         className="border-collapse text-sm select-none"
         onMouseDown={handleTableMouseDown}
         onMouseOver={handleTableMouseOver}
       >
-        <thead>
+        <thead className="sticky top-0 z-30">
           {/* Row 1: Column headers */}
           <tr className="bg-slate-100 dark:bg-slate-800">
-            <th className="sticky left-0 z-20 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-0 z-40 min-w-[80px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               사원번호
             </th>
-            <th className="sticky left-[80px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-[80px] z-40 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               사원명
             </th>
-            <th className="sticky left-[152px] z-20 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <th
+              rowSpan={2}
+              className="sticky left-[152px] z-40 min-w-[72px] border border-slate-200 bg-slate-100 px-2 py-2 text-center align-middle font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               직위
             </th>
             {dayInfo.map(({ day, index }) => (
               <th
                 key={`h1-${day}`}
-                className={`min-w-[40px] border border-slate-200 px-1 py-2 text-center font-semibold dark:border-slate-700 ${getDayBgClass(
+                className={`min-w-[48px] border border-slate-200 px-1 py-2 text-center font-semibold dark:border-slate-700 ${getDayBgClass(
                   index
-                )} ${getDayTextClass(index)}`}
+                ) || "bg-slate-100 dark:bg-slate-800"} ${getDayTextClass(index)}`}
               >
                 {day}
               </th>
@@ -409,15 +460,12 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           </tr>
           {/* Row 2: Day of week */}
           <tr className="bg-slate-50 dark:bg-slate-800/50">
-            <th className="sticky left-0 z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
-            <th className="sticky left-[80px] z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
-            <th className="sticky left-[152px] z-20 border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/50" />
             {dayInfo.map(({ day, label, index }) => (
               <th
                 key={`h2-${day}`}
                 className={`border border-slate-200 px-1 py-1 text-center text-[11px] font-medium dark:border-slate-700 ${getDayBgClass(
                   index
-                )} ${getDayTextClass(index)}`}
+                ) || "bg-slate-50 dark:bg-slate-800/50"} ${getDayTextClass(index)}`}
               >
                 {label}
               </th>
@@ -447,7 +495,6 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
               row={row}
               rowIndex={rowIndex}
               dayInfo={dayInfo}
-              daysInMonth={daysInMonth}
               editable={editable}
               selectionBounds={selectionBounds}
               onCellSelect={handleCellSelect}
@@ -458,7 +505,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
         <tfoot>
           {/* 근무집계 header */}
           <tr className="bg-emerald-50 dark:bg-emerald-900/20">
-            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-50 px-2 py-2 text-center text-sm font-bold text-slate-800 dark:border-slate-600 dark:bg-emerald-900/20 dark:text-emerald-200">
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-50 px-2 py-2 text-center text-sm font-bold text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-emerald-200">
               근무집계
             </td>
             {dayInfo.map(({ day, index }) => (
@@ -479,7 +526,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           {/* D, E, N, T, X rows */}
           {DAILY_SHIFT_TYPES.map((type) => (
             <tr key={`dsm-${type}`} className="bg-emerald-50/50 dark:bg-emerald-900/10">
-              <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
+              <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                 {type}
               </td>
               {days.map((day) => (
@@ -500,7 +547,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           ))}
           {/* T + X row */}
           <tr className="bg-emerald-50/50 dark:bg-emerald-900/10">
-            <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50/50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-emerald-900/10 dark:text-slate-300">
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-200 bg-emerald-50 px-2 py-1 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
               T + X
             </td>
             {days.map((day) => (
@@ -520,7 +567,7 @@ function ScheduleGridInner({ year, month, editable, onRemoveNurse }: ScheduleGri
           </tr>
           {/* 일별 총인원 row */}
           <tr className="bg-emerald-100 dark:bg-emerald-900/30">
-            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-100 px-2 py-2 text-center text-xs font-bold text-slate-800 whitespace-nowrap dark:border-slate-600 dark:bg-emerald-900/30 dark:text-emerald-200">
+            <td colSpan={3} className="sticky left-0 z-20 border border-slate-300 bg-emerald-100 px-2 py-2 text-center text-xs font-bold text-slate-800 whitespace-nowrap dark:border-slate-600 dark:bg-slate-800 dark:text-emerald-200">
               일별 총인원(명)
             </td>
             {days.map((day) => (
@@ -564,7 +611,6 @@ interface NurseRowProps {
   };
   rowIndex: number;
   dayInfo: { day: number; label: string; index: number }[];
-  daysInMonth: number;
   editable: boolean;
   selectionBounds: SelectionBounds | null;
   onCellSelect: (nurseId: string, day: number, shiftCode: string) => void;
@@ -575,15 +621,14 @@ const NurseRow = memo(function NurseRow({
   row,
   rowIndex,
   dayInfo,
-  daysInMonth,
   editable,
   selectionBounds,
   onCellSelect,
   onRemove,
 }: NurseRowProps) {
   const extraStats = useMemo(
-    () => computeExtraStats(row.entries, dayInfo, daysInMonth),
-    [row.entries, dayInfo, daysInMonth]
+    () => computeExtraStats(row.entries, dayInfo),
+    [row.entries, dayInfo]
   );
   return (
     <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">

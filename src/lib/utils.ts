@@ -26,8 +26,15 @@ export const SHIFT_COLORS: Record<string, string> = {
   O: "bg-green-100 text-green-800",
   X: "bg-gray-100 text-gray-600",
   T: "bg-orange-100 text-orange-800",
-  B: "bg-pink-100 text-pink-800",
+  M: "bg-emerald-100 text-emerald-800",
+  CS2: "bg-teal-100 text-teal-800",
+  C6: "bg-lime-100 text-lime-800",
+  C: "bg-green-200 text-green-900",
+  B: "bg-cyan-100 text-cyan-800",
 };
+
+/** Codes that count towards "O" (공휴) in summary calculations */
+export const O_EQUIVALENT_CODES = new Set(["O", "M", "CS2", "C6", "C", "B"]);
 
 export const STATUS_LABELS: Record<string, string> = {
   DRAFT: "작성중",
