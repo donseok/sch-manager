@@ -46,11 +46,7 @@ export default function VacationEditor({
   const daysInMonth = getDaysInMonth(year, month);
   const holidays = useMemo(() => new Set(getKoreanHolidays(year, month)), [year, month]);
 
-  // Only RN/AN nurses (exclude HN/CN)
-  const nurses = useMemo(
-    () => gridData.filter((n) => n.position !== "HN" && n.position !== "CN"),
-    [gridData]
-  );
+  const nurses = useMemo(() => gridData, [gridData]);
 
   // Day info for header
   const dayInfos = useMemo(() => {

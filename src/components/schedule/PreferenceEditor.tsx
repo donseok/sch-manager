@@ -54,9 +54,7 @@ export default function PreferenceEditor({
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const daysInMonth = getDaysInMonth(year, month);
-  const rnNurses = gridData.filter(
-    (n) => n.position !== "HN" && n.position !== "CN"
-  );
+  const rnNurses = gridData;
   const currentNurse = rnNurses[selectedNurseIdx];
 
   // 기존 희망 로드
