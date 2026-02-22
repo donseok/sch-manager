@@ -16,7 +16,7 @@ npx tsc --noEmit     # Type check
 
 ## Architecture
 
-**Next.js 14 App Router** + **Prisma (SQLite local / PostgreSQL production)** + **Zustand** + **Tailwind CSS**
+**Next.js 15 App Router** + **Prisma 6 (SQLite local / PostgreSQL production)** + **Zustand** + **Tailwind CSS 4**
 
 This is a hospital nurse scheduling management system (42병동 간호사 근무표 관리). All UI text is in Korean.
 
@@ -24,12 +24,12 @@ This is a hospital nurse scheduling management system (42병동 간호사 근무
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Framework | Next.js (App Router) | 14.2.x |
+| Framework | Next.js (App Router) | 15.x |
 | Language | TypeScript | 5.x |
-| ORM | Prisma Client | 5.22.x |
+| ORM | Prisma Client | 6.x |
 | Database | SQLite (local) / PostgreSQL (Neon, production) | - |
 | State | Zustand | 5.x |
-| Styling | Tailwind CSS | 3.4.x |
+| Styling | Tailwind CSS | 4.x |
 | Icons | Lucide React | 0.564.x |
 | Excel | SheetJS (xlsx) | 0.18.x |
 | Print | react-to-print | 3.2.x |
