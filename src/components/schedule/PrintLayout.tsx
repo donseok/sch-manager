@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { Ref } from "react";
 import type { ScheduleGridData } from "@/types";
 import {
   getDaysInMonth,
@@ -14,10 +14,10 @@ interface PrintLayoutProps {
   wardName: string;
   status: string;
   gridData: ScheduleGridData[];
+  ref?: Ref<HTMLDivElement>;
 }
 
-const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
-  ({ year, month, wardName, status, gridData }, ref) => {
+function PrintLayout({ year, month, wardName, status, gridData, ref }: PrintLayoutProps) {
     const daysInMonth = getDaysInMonth(year, month);
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const now = new Date();
@@ -296,9 +296,6 @@ const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
         </div>
       </div>
     );
-  }
-);
-
-PrintLayout.displayName = "PrintLayout";
+}
 
 export default PrintLayout;

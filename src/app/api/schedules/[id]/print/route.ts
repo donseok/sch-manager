@@ -4,9 +4,10 @@ import { requireCurrentUser } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { printFormat } = body;
 
@@ -18,7 +19,7 @@ export async function POST(
     }
 
     const schedule = await prisma.schedule.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!schedule) {
@@ -32,7 +33,7 @@ export async function POST(
 
     const printLog = await prisma.schedulePrintLog.create({
       data: {
-        scheduleId: params.id,
+        scheduleId: id,
         printedById: currentUser.id,
         printFormat,
       },
@@ -49,10 +50,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const printLogs = await prisma.schedulePrintLog.findMany({
-    where: { scheduleId: params.id },
+    where: { scheduleId: id },
     include: {
       printedBy: {
         select: { id: true, name: true },

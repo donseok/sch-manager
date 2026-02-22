@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   // Find the current schedule to get ward, year, month
   const currentSchedule = await prisma.schedule.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { wardId: true, year: true, month: true },
   });
 

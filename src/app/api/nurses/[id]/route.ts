@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const nurse = await prisma.nurse.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { ward: true },
   });
 
@@ -19,13 +20,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
 
     const nurse = await prisma.nurse.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!nurse) {
@@ -33,7 +35,7 @@ export async function PUT(
     }
 
     const updated = await prisma.nurse.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(body.employeeNumber !== undefined && { employeeNumber: body.employeeNumber }),
         ...(body.name !== undefined && { name: body.name }),
@@ -65,10 +67,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const nurse = await prisma.nurse.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!nurse) {
@@ -76,7 +79,7 @@ export async function DELETE(
   }
 
   const updated = await prisma.nurse.update({
-    where: { id: params.id },
+    where: { id },
     data: { employmentStatus: "RESIGNED" },
   });
 

@@ -21,12 +21,13 @@ import { getDaysInMonth } from "@/lib/utils";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 1. 스케줄 로드
     const schedule = await prisma.schedule.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, wardId: true, year: true, month: true, status: true },
     });
 

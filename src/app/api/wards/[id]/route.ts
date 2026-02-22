@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const { wardCode, wardName, description, isActive } = body;
 
         const ward = await prisma.ward.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 ...(wardCode !== undefined ? { wardCode } : {}),
                 ...(wardName !== undefined ? { wardName } : {}),
@@ -43,11 +44,12 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const ward = await prisma.ward.update({
-            where: { id: params.id },
+            where: { id },
             data: { isActive: false },
         });
 

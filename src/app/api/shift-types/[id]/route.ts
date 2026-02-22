@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const body = await request.json();
         const { name, description, colorCode, isWorkingDay, displayOrder, isActive } = body;
 
         const shiftType = await prisma.shiftType.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 ...(name !== undefined ? { name } : {}),
                 ...(description !== undefined ? { description } : {}),
@@ -39,11 +40,12 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const shiftType = await prisma.shiftType.update({
-            where: { id: params.id },
+            where: { id },
             data: { isActive: false },
         });
 

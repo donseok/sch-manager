@@ -4,10 +4,11 @@ import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const schedule = await prisma.schedule.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       entries: {
         include: { nurse: true },
@@ -38,14 +39,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { action } = body;
 
     const schedule = await prisma.schedule.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { id: true, status: true, wardId: true, year: true, month: true },
     });
 
@@ -68,7 +70,7 @@ export async function PATCH(
           year: schedule.year,
           month: schedule.month,
           status: "CONFIRMED",
-          id: { not: params.id },
+          id: { not: id },
         },
         select: { version: true },
       });
@@ -81,7 +83,7 @@ export async function PATCH(
       }
 
       const updated = await prisma.schedule.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: "CONFIRMED",
           confirmedAt: new Date(),
@@ -105,7 +107,7 @@ export async function PATCH(
       }
 
       const updated = await prisma.schedule.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: "DRAFT",
           confirmedAt: null,
@@ -132,10 +134,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const schedule = await prisma.schedule.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     select: { id: true, status: true },
   });
 
@@ -151,7 +154,7 @@ export async function DELETE(
   }
 
   await prisma.schedule.delete({
-    where: { id: params.id },
+    where: { id: id },
   });
 
   return NextResponse.json({ message: "근무표가 삭제되었습니다." });

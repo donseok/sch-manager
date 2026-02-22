@@ -4,10 +4,11 @@ import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const entries = await prisma.scheduleEntry.findMany({
-    where: { scheduleId: params.id },
+    where: { scheduleId: id },
     include: { nurse: true },
     orderBy: [
       { nurseId: "asc" },
@@ -20,8 +21,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { entries, nurseIds } = body;
@@ -34,7 +36,7 @@ export async function PUT(
     }
 
     const schedule = await prisma.schedule.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!schedule) {
@@ -67,7 +69,7 @@ export async function PUT(
 
     // Fetch all existing entries to detect deletions and changes
     const existingEntries = await prisma.scheduleEntry.findMany({
-      where: { scheduleId: params.id },
+      where: { scheduleId: id },
     });
 
     // Find entries that exist in DB but not in incoming data (deleted/cleared)
@@ -81,7 +83,7 @@ export async function PUT(
         // Record change log for deletion
         await prisma.scheduleChangeLog.create({
           data: {
-            scheduleId: params.id,
+            scheduleId: id,
             nurseId: existing.nurseId,
             workDate: existing.workDate,
             previousShiftCode: existing.shiftTypeCode,
@@ -123,7 +125,7 @@ export async function PUT(
       await prisma.scheduleEntry.upsert({
         where: {
           scheduleId_nurseId_workDate: {
-            scheduleId: params.id,
+            scheduleId: id,
             nurseId,
             workDate,
           },
@@ -133,7 +135,7 @@ export async function PUT(
           isModified: true,
         },
         create: {
-          scheduleId: params.id,
+          scheduleId: id,
           nurseId,
           workDate,
           shiftTypeCode,
@@ -144,7 +146,7 @@ export async function PUT(
       if (isChanged) {
         await prisma.scheduleChangeLog.create({
           data: {
-            scheduleId: params.id,
+            scheduleId: id,
             nurseId,
             workDate,
             previousShiftCode,
@@ -161,7 +163,7 @@ export async function PUT(
     for (const nurseId of Array.from(affectedNurseIds)) {
       const nurseEntries = await prisma.scheduleEntry.findMany({
         where: {
-          scheduleId: params.id,
+          scheduleId: id,
           nurseId,
         },
       });
@@ -193,7 +195,7 @@ export async function PUT(
       await prisma.scheduleSummary.upsert({
         where: {
           scheduleId_nurseId: {
-            scheduleId: params.id,
+            scheduleId: id,
             nurseId,
           },
         },
@@ -209,7 +211,7 @@ export async function PUT(
           totalOffDays,
         },
         create: {
-          scheduleId: params.id,
+          scheduleId: id,
           nurseId,
           countD,
           countE,
@@ -228,7 +230,7 @@ export async function PUT(
     if (nurseIds && Array.isArray(nurseIds) && nurseIds.length > 0) {
       await prisma.scheduleSummary.deleteMany({
         where: {
-          scheduleId: params.id,
+          scheduleId: id,
           nurseId: { notIn: nurseIds },
         },
       });
@@ -236,7 +238,7 @@ export async function PUT(
 
     // Return updated entries
     const updatedEntries = await prisma.scheduleEntry.findMany({
-      where: { scheduleId: params.id },
+      where: { scheduleId: id },
       include: { nurse: true },
       orderBy: [
         { nurseId: "asc" },

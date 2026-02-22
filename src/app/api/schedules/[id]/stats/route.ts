@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 // Compute per-nurse statistics for a given schedule
 export async function GET(
     _request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const schedule = await prisma.schedule.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 entries: {
                     include: {
