@@ -24,21 +24,23 @@ This is a hospital nurse scheduling management system (42병동 간호사 근무
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Framework | Next.js (App Router) | 15.x |
-| Language | TypeScript | 5.x |
-| ORM | Prisma Client | 6.x |
+| Framework | Next.js (App Router) | 15.5.x |
+| Language | TypeScript | 5.9.x |
+| Runtime | React | 19.2.x |
+| ORM | Prisma Client | 6.19.x |
 | Database | SQLite (local) / PostgreSQL (Neon, production) | - |
-| State | Zustand | 5.x |
-| Styling | Tailwind CSS | 4.x |
-| Icons | Lucide React | 0.564.x |
+| State | Zustand | 5.0.x |
+| Styling | Tailwind CSS | 4.2.x |
+| Icons | Lucide React | 0.575.x |
 | Excel | SheetJS (xlsx) | 0.18.x |
 | Print | react-to-print | 3.2.x |
-| Validation | Zod | 4.x |
-| Date | date-fns | 4.x |
+| Validation | Zod | 4.3.x |
+| Date | date-fns | 4.1.x |
 | Theme | next-themes | 0.4.x |
-| Table | @tanstack/react-table | 8.x (installed, not yet used in grid) |
+| Table | @tanstack/react-table | 8.21.x |
 | Auth | bcryptjs + jose (JWT) | 3.x / 6.x |
 | Utility | clsx | 2.x |
+| Linting | ESLint (flat config) | 9.39.x |
 
 ### Data Flow
 
@@ -48,7 +50,7 @@ Browser → Middleware (JWT verify) → Next.js API Routes (src/app/api/) → Pr
 Browser ← React Components ← Zustand Store (schedule grid state) + AuthContext (user session)
 ```
 
-### Core Domain Model (Prisma, 10 models)
+### Core Domain Model (Prisma, 11 models)
 
 ```
 Ward ──1:N──→ Nurse ──1:N──→ ScheduleEntry
@@ -72,6 +74,7 @@ Ward ──1:N──→ Nurse ──1:N──→ ScheduleEntry
 - **ScheduleApproval** = approval workflow history (step, role, action, comment)
 - **ScheduleChangeLog** = audit trail of all cell edits (previous/new shift code, version)
 - **SchedulePrintLog** = print action history (format, timestamp)
+- **NursePreference** = nurse shift preferences per day (nurseId + year + month + day unique, priority: PREFER/STRONG/MUST)
 - Schedule status flow: `DRAFT` → `CONFIRMED` (one confirmed per ward/month)
 - Unique constraints: Schedule(wardId, year, month, version), Entry(scheduleId, nurseId, workDate), Summary(scheduleId, nurseId)
 - Cascading deletes on Schedule-dependent tables
@@ -102,7 +105,9 @@ src/
 │   │   │       ├── excel/      # GET: xlsx export
 │   │   │       ├── history/    # GET: change audit log
 │   │   │       ├── previous/   # GET: previous month reference
+│   │   │       ├── preferences/ # GET/POST: nurse shift preferences
 │   │   │       ├── print/      # POST/GET: print log
+│   │   │       ├── generate/   # POST: AI schedule generation
 │   │   │       └── stats/      # GET: per-nurse statistics
 │   │   ├── seed/               # POST: seed database
 │   │   ├── shift-types/        # GET/POST, [id] route
@@ -114,18 +119,28 @@ src/
 │       └── [id]/edit/          # Client component — schedule grid editor (~1070 lines)
 ├── components/
 │   ├── layout/                 # Sidebar, Header, MainContent, Providers
-│   ├── schedule/               # ScheduleGrid, ShiftCell, ChangeHistory, PrintLayout
+│   ├── schedule/               # ScheduleGrid, ShiftCell, ChangeHistory, PrintLayout,
+│   │                           # GenerateScheduleModal, PreferenceEditor, VacationEditor
 │   └── ui/                     # Button, Badge, Modal, NurseFormModal, ThemeToggle
 ├── contexts/                   # SidebarContext, AuthContext
 ├── lib/
 │   ├── auth.ts                 # JWT auth helpers (hash, verify, token create/verify, getCurrentUser)
 │   ├── prisma.ts               # Singleton PrismaClient
-│   └── utils.ts                # Date helpers, SHIFT_COLORS, STATUS/ROLE/POSITION labels, cn()
+│   ├── utils.ts                # Date helpers, SHIFT_COLORS, STATUS/ROLE/POSITION labels, cn()
+│   ├── korean-holidays.ts      # Fixed + lunar holiday lookup (2024-2030)
+│   └── scheduling/             # AI scheduling algorithm (6-phase + Simulated Annealing)
+│       ├── index.ts            # Public exports
+│       ├── generator.ts        # Main 6-phase algorithm
+│       ├── state.ts            # State helpers
+│       ├── scorer.ts           # Scoring function
+│       ├── validator.ts        # Constraint validation
+│       └── swap-operators.ts   # SA swap operations
 ├── middleware.ts                # Next.js middleware — JWT auth guard (redirects to /login)
 ├── store/
 │   └── schedule.ts             # Zustand store for grid state
 └── types/
-    └── index.ts                # Prisma re-exports + ScheduleGridData type
+    ├── index.ts                # Prisma re-exports + ScheduleGridData type
+    └── scheduling.ts           # AI scheduling algorithm type definitions
 ```
 
 ## Key Patterns
@@ -178,6 +193,33 @@ Client-side state for the schedule editing grid. Key fields:
 
 ### Confirm Constraint
 Only one CONFIRMED schedule per ward/year/month. The PATCH endpoint checks for existing confirmed schedule before allowing confirmation. All nurses must have all days filled to confirm.
+
+### AI Schedule Generation (`src/lib/scheduling/`)
+6-phase algorithm with Simulated Annealing optimization (~1,155 lines total):
+1. **Phase 1** — Fixed Assignment: HN/CN → mandatory positions (weekday=D, weekend=O)
+2. **Phase 2** — Off Distribution: Fair off-day allocation respecting previous month
+3. **Phase 3** — Night Assignment: N shift placement with fairness scoring
+4. **Phase 4** — Evening Assignment: E shift placement
+5. **Phase 5** — Day Filling: D shift to meet minimum staffing
+6. **Phase 6** — Simulated Annealing: Optimize via swap operations (5000 iterations, cooling 0.995)
+
+Key files:
+- `generator.ts` — Main algorithm (490 lines)
+- `scorer.ts` — Multi-factor scoring (preference, fairness, consecutive penalties)
+- `validator.ts` — Hard/soft constraint validation (min staffing, max consecutive)
+- `swap-operators.ts` — SA swap: SAME_DAY_SWAP, SAME_NURSE_SWAP, SINGLE_REASSIGN
+- `state.ts` — State helpers
+- `src/types/scheduling.ts` — Type definitions (ShiftCode, PreferencePriority, ScheduleGenerationConfig, etc.)
+- `src/lib/korean-holidays.ts` — Fixed + lunar holidays lookup (2024-2030), weekend/holiday detection
+
+API endpoints:
+- `POST /api/schedules/[id]/generate` — Generate AI schedule (preview mode)
+- `GET/POST /api/schedules/[id]/preferences` — Nurse shift preferences (PREFER/STRONG/MUST)
+
+UI components:
+- `GenerateScheduleModal` — AI generation config modal (min staff, constraints, iterations)
+- `PreferenceEditor` — Per-nurse daily preference editor
+- `VacationEditor` — Vacation/off day editor
 
 ### Dashboard (`src/app/dashboard/page.tsx`)
 Server component that queries only CONFIRMED schedules for the current month. Shows today's shifts, week preview, fairness metrics, alerts (consecutive days ≥5, N→D violations), staff stats.
