@@ -214,7 +214,7 @@ export default function NursesPage() {
                                               placeholder="이름으로 검색"
                                               value={searchName}
                                               onChange={(e) => setSearchName(e.target.value)}
-                                              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+                                              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                                             />
                       </div>
               
@@ -225,7 +225,7 @@ export default function NursesPage() {
               </div>
         
           {/* Table - scrollable */}
-              <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:bg-slate-800 dark:border-slate-700">
+              <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white shadow-xs dark:bg-slate-800 dark:border-slate-700">
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
                                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />

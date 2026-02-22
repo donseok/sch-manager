@@ -41,7 +41,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
       <div className="w-full max-w-sm">
-        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-xs dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               42병동 근무표
@@ -64,7 +64,7 @@ export default function LoginPage() {
                 type="text"
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 placeholder="아이디를 입력하세요"
                 autoComplete="username"
                 autoFocus
@@ -83,7 +83,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 placeholder="비밀번호를 입력하세요"
                 autoComplete="current-password"
               />
@@ -96,7 +96,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !loginId || !password}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-900"
+              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-900"
             >
               {loading ? "로그인 중..." : "로그인"}
             </button>

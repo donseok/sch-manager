@@ -547,7 +547,7 @@ export default function ScheduleEditPage() {
       )}
 
       {/* Top bar: Schedule info + Actions - fixed */}
-      <div className="shrink-0 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-200 print:shadow-none print:border-0 sm:flex-row sm:items-center sm:justify-between dark:bg-slate-800 dark:border-slate-700">
+      <div className="shrink-0 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-xs border border-slate-200 print:shadow-none print:border-0 sm:flex-row sm:items-center sm:justify-between dark:bg-slate-800 dark:border-slate-700">
         {/* Schedule info */}
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -735,7 +735,7 @@ export default function ScheduleEditPage() {
       </div>
 
       {/* Shift type legend - fixed */}
-      <div className="shrink-0 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-3 shadow-sm border border-slate-200 print:shadow-none print:border-0 dark:bg-slate-800 dark:border-slate-700">
+      <div className="shrink-0 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-3 shadow-xs border border-slate-200 print:shadow-none print:border-0 dark:bg-slate-800 dark:border-slate-700">
         <span className="mr-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
           근무유형:
         </span>
@@ -762,7 +762,7 @@ export default function ScheduleEditPage() {
       />
 
       {/* Change History */}
-      <div className="rounded-xl bg-white shadow-sm border border-slate-200 print:shadow-none print:border-0 dark:bg-slate-800 dark:border-slate-700">
+      <div className="rounded-xl bg-white shadow-xs border border-slate-200 print:shadow-none print:border-0 dark:bg-slate-800 dark:border-slate-700">
         <button
           onClick={() => setShowChangeHistory((prev) => !prev)}
           className="flex w-full items-center justify-between border-b border-slate-200 px-6 py-4 text-left hover:bg-slate-50 transition-colors dark:border-slate-700 dark:hover:bg-slate-700/50"
@@ -930,7 +930,7 @@ export default function ScheduleEditPage() {
             <select
               value={selectedNurseId}
               onChange={(e) => setSelectedNurseId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
             >
               {wardNurses.map((nurse) => (
                 <option key={nurse.id} value={nurse.id}>

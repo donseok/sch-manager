@@ -159,7 +159,7 @@ export default function NurseFormModal({
                                               name="employeeNumber"
                                               value={formData.employeeNumber}
                                               onChange={handleChange}
-                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
+                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
                                                               errors.employeeNumber
                                                                 ? "border-red-300 focus:ring-red-500"
                                                                 : "border-slate-300 dark:border-slate-600"
@@ -185,7 +185,7 @@ export default function NurseFormModal({
                                               name="name"
                                               value={formData.name}
                                               onChange={handleChange}
-                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
+                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
                                                               errors.name
                                                                 ? "border-red-300 focus:ring-red-500"
                                                                 : "border-slate-300 dark:border-slate-600"
@@ -210,7 +210,7 @@ export default function NurseFormModal({
                                               name="position"
                                               value={formData.position}
                                               onChange={handleChange}
-                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
+                                              className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 ${
                                                               errors.position
                                                                 ? "border-red-300 focus:ring-red-500"
                                                                 : "border-slate-300 dark:border-slate-600"
@@ -261,7 +261,7 @@ export default function NurseFormModal({
                                               name="hireDate"
                                               value={formData.hireDate}
                                               onChange={handleChange}
-                                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                                             />
                       </div>
               
@@ -279,7 +279,7 @@ export default function NurseFormModal({
                                               name="sortOrder"
                                               value={formData.sortOrder}
                                               onChange={handleChange}
-                                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
                                               min={0}
                                             />
                       </div>

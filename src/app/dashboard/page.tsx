@@ -458,7 +458,7 @@ export default async function DashboardPage() {
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {/* Active nurses */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -476,7 +476,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Schedule status */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -504,7 +504,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Empty cells */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -522,7 +522,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Progress */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -547,7 +547,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── 1. Today's Shifts ── */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <Clock className="h-5 w-5 text-blue-500" />
@@ -631,7 +631,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── 5. Week Preview ── */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <Calendar className="h-5 w-5 text-indigo-500" />
@@ -758,7 +758,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── 3. Fairness Metrics ── */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <BarChart3 className="h-5 w-5 text-emerald-500" />
@@ -901,7 +901,7 @@ export default async function DashboardPage() {
       {/* ── 4 & 7. Staff Stats + Alerts ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Staff stats */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               <UserCheck className="h-5 w-5 text-teal-500" />
@@ -954,7 +954,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Alerts */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
           <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               <Bell className="h-5 w-5 text-orange-500" />
@@ -1001,7 +1001,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── 6. Recent Changes ── */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <Activity className="h-5 w-5 text-blue-500" />

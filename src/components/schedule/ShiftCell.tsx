@@ -154,7 +154,7 @@ function ShiftCellInner({
       {isEditing ? (
         <input
           ref={inputRef}
-          className="h-8 w-full border-2 border-blue-400 text-center text-sm font-semibold outline-none"
+          className="h-8 w-full border-2 border-blue-400 text-center text-sm font-semibold outline-hidden"
           defaultValue={value}
           onKeyDown={handleInputKeyDown}
           onBlur={handleInputBlur}
